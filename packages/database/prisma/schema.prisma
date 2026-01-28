@@ -1,0 +1,489 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum Role {
+  SUPER_ADMIN        // Platform administrator
+  ORG_ADMIN          // Organization administrator
+  EXAM_AUTHOR        // Creates questions and question banks
+  EXAM_COORDINATOR   // Schedules exams, assigns question banks
+  ENROLLMENT_MANAGER // Invites and approves candidates
+  PROCTOR_REVIEWER   // Reviews sessions and flags
+  QUALITY_ASSURANCE  // Reviews decisions, audits
+  REPORT_VIEWER      // Read-only analytics access
+  CANDIDATE          // Takes exams
+}
+
+enum QuestionBankStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  ARCHIVED
+}
+
+enum QuestionStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum ExamStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ENROLLED
+  COMPLETED
+  CANCELLED
+}
+
+enum SessionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FLAGGED
+  UNDER_REVIEW
+  CLEARED
+  VIOLATION_CONFIRMED
+}
+
+enum FlagType {
+  NO_FACE_DETECTED
+  MULTIPLE_FACES
+  LOOKING_AWAY
+  PHONE_DETECTED
+  PERSON_DETECTED
+  BROWSER_SWITCH
+  COPY_PASTE
+  UNAUTHORIZED_APP
+  AUDIO_DETECTED
+  MANUAL_FLAG
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ReviewStatus {
+  PENDING
+  IN_REVIEW
+  CLEARED
+  VIOLATION
+  APPEALED
+  APPEAL_APPROVED
+  APPEAL_REJECTED
+}
+
+// ============================================================================
+// CORE MODELS
+// ============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  roles              UserRole[]
+  organizations      OrganizationMember[]
+  createdQuestionBanks QuestionBank[]     @relation("AuthorQuestionBanks")
+  createdExams       Exam[]               @relation("CoordinatorExams")
+  enrollments        Enrollment[]
+  sessions           ExamSession[]
+  reviewedSessions   ExamSession[]        @relation("ReviewedSessions")
+  auditLogs          AuditLog[]
+  accounts           Account[]
+  sessions_auth      Session[]
+
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================================
+// ROLE-BASED ACCESS CONTROL
+// ============================================================================
+
+model UserRole {
+  id             String   @id @default(cuid())
+  userId         String
+  role           Role
+  organizationId String
+  departmentId   String?
+  assignedAt     DateTime @default(now())
+  assignedBy     String?
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department   Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, role, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([role])
+}
+
+// ============================================================================
+// ORGANIZATION STRUCTURE
+// ============================================================================
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  domain    String?
+  logoUrl   String?
+  settings  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  members       OrganizationMember[]
+  departments   Department[]
+  userRoles     UserRole[]
+  questionBanks QuestionBank[]
+  exams         Exam[]
+  enrollments   Enrollment[]
+
+  @@index([slug])
+}
+
+model OrganizationMember {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  joinedAt       DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model Department {
+  id             String   @id @default(cuid())
+  name           String
+  organizationId String
+  parentId       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent       Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children     Department[] @relation("DepartmentHierarchy")
+  userRoles    UserRole[]
+  exams        Exam[]
+
+  @@index([organizationId])
+  @@index([parentId])
+}
+
+// ============================================================================
+// QUESTION BANK & QUESTIONS
+// ============================================================================
+
+model QuestionBank {
+  id             String              @id @default(cuid())
+  title          String
+  description    String?
+  organizationId String
+  authorId       String
+  status         QuestionBankStatus  @default(DRAFT)
+  tags           String[]
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  author       User         @relation("AuthorQuestionBanks", fields: [authorId], references: [id])
+  questions    Question[]
+  exams        Exam[]
+
+  @@index([organizationId])
+  @@index([authorId])
+  @@index([status])
+}
+
+model Question {
+  id              String         @id @default(cuid())
+  questionBankId  String
+  type            String         // multiple_choice, true_false, essay, coding
+  text            String
+  options         Json?          // For multiple choice
+  correctAnswer   Json?
+  explanation     String?
+  difficulty      Difficulty     @default(MEDIUM)
+  points          Int            @default(1)
+  timeLimit       Int?           // seconds
+  tags            String[]
+  status          QuestionStatus @default(DRAFT)
+  metadata        Json?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  questionBank QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
+  answers      Answer[]
+
+  @@index([questionBankId])
+  @@index([status])
+  @@index([difficulty])
+}
+
+// ============================================================================
+// EXAMS & SESSIONS
+// ============================================================================
+
+model Exam {
+  id              String     @id @default(cuid())
+  title           String
+  description     String?
+  organizationId  String
+  departmentId    String?
+  coordinatorId   String
+  questionBankId  String
+  status          ExamStatus @default(DRAFT)
+
+  // Scheduling
+  scheduledStart  DateTime?
+  scheduledEnd    DateTime?
+  duration        Int        // minutes
+
+  // Configuration
+  passingScore    Int        @default(70)
+  allowedAttempts Int        @default(1)
+
+  // Proctoring settings
+  requireIdentityVerification Boolean @default(true)
+  requireLockdownBrowser      Boolean @default(true)
+  enableRecording             Boolean @default(true)
+  enableAIMonitoring          Boolean @default(true)
+
+  settings        Json?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  organization  Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department    Department?   @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  coordinator   User          @relation("CoordinatorExams", fields: [coordinatorId], references: [id])
+  questionBank  QuestionBank  @relation(fields: [questionBankId], references: [id])
+  enrollments   Enrollment[]
+  sessions      ExamSession[]
+
+  @@index([organizationId])
+  @@index([departmentId])
+  @@index([coordinatorId])
+  @@index([questionBankId])
+  @@index([status])
+  @@index([scheduledStart])
+}
+
+model Enrollment {
+  id             String           @id @default(cuid())
+  examId         String
+  candidateId    String
+  organizationId String
+  status         EnrollmentStatus @default(PENDING)
+  invitedBy      String?
+  approvedBy     String?
+  invitedAt      DateTime         @default(now())
+  approvedAt     DateTime?
+  expiresAt      DateTime?
+  metadata       Json?
+
+  exam         Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  candidate    User         @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sessions     ExamSession[]
+
+  @@unique([examId, candidateId])
+  @@index([examId])
+  @@index([candidateId])
+  @@index([status])
+}
+
+model ExamSession {
+  id                String        @id @default(cuid())
+  examId            String
+  enrollmentId      String
+  candidateId       String
+  attemptNumber     Int           @default(1)
+  status            SessionStatus @default(NOT_STARTED)
+
+  // Timing
+  startedAt         DateTime?
+  completedAt       DateTime?
+  submittedAt       DateTime?
+
+  // Results
+  score             Int?
+  passed            Boolean?
+
+  // Identity verification
+  identityVerified  Boolean       @default(false)
+  identityData      Json?
+
+  // Recording
+  recordingUrl      String?
+  recordingBlobKey  String?
+
+  // Review
+  reviewStatus      ReviewStatus  @default(PENDING)
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  reviewNotes       String?
+
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  exam         Exam        @relation(fields: [examId], references: [id], onDelete: Cascade)
+  enrollment   Enrollment  @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  candidate    User        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  reviewer     User?       @relation("ReviewedSessions", fields: [reviewedBy], references: [id])
+  answers      Answer[]
+  flags        Flag[]
+
+  @@index([examId])
+  @@index([enrollmentId])
+  @@index([candidateId])
+  @@index([status])
+  @@index([reviewStatus])
+  @@index([startedAt])
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  sessionId  String
+  questionId String
+  answer     Json
+  isCorrect  Boolean?
+  points     Int?
+  timeTaken  Int?     // seconds
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  session  ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionId])
+  @@index([sessionId])
+  @@index([questionId])
+}
+
+// ============================================================================
+// MONITORING & FLAGS
+// ============================================================================
+
+model Flag {
+  id          String       @id @default(cuid())
+  sessionId   String
+  type        FlagType
+  severity    Severity     @default(MEDIUM)
+  timestamp   DateTime     @default(now())
+  description String?
+  evidence    Json?        // Screenshots, metadata, etc.
+  resolved    Boolean      @default(false)
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  resolution  String?
+
+  session ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([type])
+  @@index([severity])
+  @@index([resolved])
+}
+
+// ============================================================================
+// AUDIT LOG
+// ============================================================================
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  userId         String?
+  action         String
+  resource       String
+  resourceId     String?
+  details        Json?
+  ipAddress      String?
+  userAgent      String?
+  timestamp      DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([resource, resourceId])
+  @@index([timestamp])
+}
