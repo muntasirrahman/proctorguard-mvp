@@ -2,7 +2,7 @@
 
 > **Status**: ✅ Ready for Development | Database Migrated | Authentication Configured
 
-Enterprise online proctoring platform with role-based access control, built as a monorepo with Next.js 16, Prisma, and Better Auth.
+Enterprise online proctoring platform with role-based access control, built as a monorepo with Next.js 15, Prisma, and Better Auth.
 
 ---
 
@@ -88,7 +88,7 @@ proctor-exam-mvp/
 ## 🛠 Tech Stack
 
 ### Frontend
-- **Framework**: Next.js 16 (App Router)
+- **Framework**: Next.js 15 (App Router)
 - **UI Library**: React 19
 - **Styling**: Tailwind CSS
 - **Components**: shadcn/ui (Radix UI primitives)
@@ -428,6 +428,6 @@ npm install
 
 ---
 
-**Built with ❤️ using Next.js 16, Prisma, Better Auth, and shadcn/ui**
+**Built with ❤️ using Next.js 15, Prisma, Better Auth, and shadcn/ui**
 
 Last Updated: 2026-01-28
