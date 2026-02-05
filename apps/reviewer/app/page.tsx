@@ -1,7 +1,13 @@
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@proctorguard/ui';
+import { auth } from '@proctorguard/auth';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (session) redirect('/dashboard');
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100 dark:from-slate-900 dark:to-amber-950 p-4">
       <Card className="w-full max-w-md">
