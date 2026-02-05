@@ -8,6 +8,11 @@
   ],
   "scripts": {
     "dev": "concurrently -n candidate,admin,author,coordinator,reviewer -c cyan,blue,green,magenta,yellow \"npm run dev --workspace=@proctorguard/candidate\" \"npm run dev --workspace=@proctorguard/admin\" \"npm run dev --workspace=@proctorguard/author\" \"npm run dev --workspace=@proctorguard/coordinator\" \"npm run dev --workspace=@proctorguard/reviewer\"",
+    "dev:candidate": "cd apps/candidate && npm run dev",
+    "dev:admin": "cd apps/admin && npm run dev",
+    "dev:author": "cd apps/author && npm run dev",
+    "dev:coordinator": "cd apps/coordinator && npm run dev",
+    "dev:reviewer": "cd apps/reviewer && npm run dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "clean": "turbo clean",
@@ -21,6 +26,7 @@
     "turbo": "^2.3.3",
     "typescript": "^5.7.2"
   },
+  "packageManager": "npm@11.6.3",
   "engines": {
     "node": ">=20.0.0"
   }
