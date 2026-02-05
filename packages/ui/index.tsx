@@ -4,5 +4,9 @@ export * from './components/card';
 export * from './components/input';
 export * from './components/label';
 
+export * from './components/sign-in-form';
+export * from './components/sign-up-form';
+export * from './components/user-menu';
+
 // Export utilities
 export * from './lib/utils';
