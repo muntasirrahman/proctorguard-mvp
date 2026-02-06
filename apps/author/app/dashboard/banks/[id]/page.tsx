@@ -2,6 +2,7 @@ import { auth } from '@proctorguard/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { prisma } from '@proctorguard/database';
+import { requirePermission, Permission } from '@proctorguard/permissions';
 import { getQuestionBank } from '../../../actions/question-banks';
 import { getQuestions } from '../../../actions/questions';
 import { QuestionList } from '../../../components/question-list';
@@ -23,6 +24,12 @@ export default async function QuestionBankPage({ params }: PageProps) {
   if (!membership) {
     return <div className="p-8 text-center">No organization found</div>;
   }
+
+  // Validate permission before accessing questions
+  await requirePermission(
+    { userId: session.user.id, organizationId: membership.organizationId },
+    Permission.VIEW_QUESTION
+  );
 
   const { id } = await params;
   const bank = await getQuestionBank(id, membership.organizationId);
