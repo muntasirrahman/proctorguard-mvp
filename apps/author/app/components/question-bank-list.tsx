@@ -63,6 +63,7 @@ export function QuestionBankList({ banks, organizationId }: QuestionBankListProp
   };
 
   const handleDelete = async (bankId: string) => {
+    // TODO: Replace browser confirm/alert with inline error handling (Dialog + toast) for consistency
     if (!confirm('Are you sure you want to delete this question bank?')) return;
 
     setDeletingId(bankId);

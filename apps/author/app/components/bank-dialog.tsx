@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -45,6 +45,19 @@ export function BankDialog({ open, onOpenChange, organizationId, bank }: BankDia
     tags: bank?.tags.join(', ') || '',
     status: bank?.status || QuestionBankStatus.DRAFT
   });
+
+  // Reset form when dialog opens/closes or bank changes
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        title: bank?.title || '',
+        description: bank?.description || '',
+        tags: bank?.tags.join(', ') || '',
+        status: bank?.status || QuestionBankStatus.DRAFT
+      });
+      setError(null);
+    }
+  }, [open, bank]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
