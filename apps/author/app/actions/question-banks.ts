@@ -51,11 +51,10 @@ export async function getQuestionBank(bankId: string, organizationId: string) {
     Permission.VIEW_QUESTION
   );
 
+  // FIX: Use only unique field in findUnique
   const bank = await prisma.questionBank.findUnique({
     where: {
-      id: bankId,
-      authorId: session.user.id,
-      organizationId
+      id: bankId
     },
     include: {
       _count: {
@@ -65,6 +64,14 @@ export async function getQuestionBank(bankId: string, organizationId: string) {
   });
 
   if (!bank) throw new Error('Question bank not found');
+
+  // Check ownership and organization separately
+  if (bank.authorId !== session.user.id) {
+    throw new Error('Access denied: You can only view your own question banks');
+  }
+  if (bank.organizationId !== organizationId) {
+    throw new Error('Question bank not found');
+  }
 
   return {
     ...bank,
@@ -81,14 +88,31 @@ export async function createQuestionBank(data: QuestionBankData) {
     Permission.CREATE_QUESTION_BANK
   );
 
+  // Validate and trim inputs
+  const trimmedTitle = data.title?.trim();
+  if (!trimmedTitle) {
+    throw new Error('Title is required');
+  }
+
   const bank = await prisma.questionBank.create({
     data: {
-      title: data.title,
-      description: data.description,
-      tags: data.tags || [],
+      title: trimmedTitle,
+      description: data.description?.trim() || null,
+      tags: (data.tags || []).map(t => t.trim()).filter(Boolean),
       status: data.status,
       organizationId: data.organizationId,
       authorId: session.user.id
+    }
+  });
+
+  // Audit log
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: 'created',
+      resource: 'question_bank',
+      resourceId: bank.id,
+      details: { title: bank.title, status: bank.status }
     }
   });
 
@@ -106,12 +130,31 @@ export async function updateQuestionBank(bankId: string, data: Partial<QuestionB
   });
 
   if (!existing) throw new Error('Question bank not found');
-  if (existing.authorId !== session.user.id) throw new Error('Forbidden');
+  if (existing.authorId !== session.user.id) {
+    throw new Error('Access denied: You can only manage your own question banks');
+  }
 
   await requirePermission(
     { userId: session.user.id, organizationId: existing.organizationId },
     Permission.EDIT_QUESTION_BANK
   );
+
+  // Validate and trim inputs
+  if (data.title !== undefined) {
+    const trimmedTitle = data.title?.trim();
+    if (!trimmedTitle) {
+      throw new Error('Title is required');
+    }
+    data.title = trimmedTitle;
+  }
+
+  if (data.description !== undefined && data.description) {
+    data.description = data.description.trim();
+  }
+
+  if (data.tags !== undefined) {
+    data.tags = data.tags.map(t => t.trim()).filter(Boolean);
+  }
 
   const bank = await prisma.questionBank.update({
     where: { id: bankId },
@@ -120,6 +163,21 @@ export async function updateQuestionBank(bankId: string, data: Partial<QuestionB
       ...(data.description !== undefined && { description: data.description }),
       ...(data.tags !== undefined && { tags: data.tags }),
       ...(data.status !== undefined && { status: data.status })
+    }
+  });
+
+  // Audit log
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: 'updated',
+      resource: 'question_bank',
+      resourceId: bank.id,
+      details: {
+        title: data.title,
+        description: data.description,
+        status: data.status
+      }
     }
   });
 
@@ -143,9 +201,11 @@ export async function deleteQuestionBank(bankId: string) {
   });
 
   if (!existing) throw new Error('Question bank not found');
-  if (existing.authorId !== session.user.id) throw new Error('Forbidden');
+  if (existing.authorId !== session.user.id) {
+    throw new Error('Access denied: You can only manage your own question banks');
+  }
   if (existing._count.questions > 0) {
-    throw new Error('Cannot delete question bank with questions');
+    throw new Error(`Cannot delete question bank with ${existing._count.questions} questions`);
   }
 
   await requirePermission(
@@ -155,6 +215,17 @@ export async function deleteQuestionBank(bankId: string) {
 
   await prisma.questionBank.delete({
     where: { id: bankId }
+  });
+
+  // Audit log
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: 'deleted',
+      resource: 'question_bank',
+      resourceId: bankId,
+      details: { title: existing.title }
+    }
   });
 
   revalidatePath('/dashboard');
