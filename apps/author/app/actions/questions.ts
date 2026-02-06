@@ -140,7 +140,6 @@ export async function createQuestion(bankId: string, data: QuestionData) {
   await prisma.auditLog.create({
     data: {
       userId: session.user.id,
-      organizationId: bank.organizationId,
       action: 'created',
       resource: 'question',
       resourceId: question.id,
@@ -237,7 +236,6 @@ export async function updateQuestion(questionId: string, data: Partial<QuestionD
   await prisma.auditLog.create({
     data: {
       userId: session.user.id,
-      organizationId: existing.questionBank.organizationId,
       action: 'updated',
       resource: 'question',
       resourceId: question.id,
@@ -278,7 +276,6 @@ export async function deleteQuestion(questionId: string) {
   await prisma.auditLog.create({
     data: {
       userId: session.user.id,
-      organizationId: existing.questionBank.organizationId,
       action: 'deleted',
       resource: 'question',
       resourceId: questionId,
