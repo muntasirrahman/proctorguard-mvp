@@ -4,10 +4,9 @@ import { redirect } from 'next/navigation';
 import { DashboardShell } from '@proctorguard/ui';
 
 const navItems = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Users', href: '/dashboard/users' },
-  { label: 'Departments', href: '/dashboard/departments' },
-  { label: 'Settings', href: '/dashboard/settings' },
+  { label: 'Overview', href: '/dashboard', icon: 'LayoutDashboard' },
+  { label: 'Users', href: '/dashboard/users', icon: 'Users' },
+  { label: 'Departments', href: '/dashboard/departments', icon: 'Building2' },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -15,7 +14,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!session) redirect('/auth/signin');
 
   return (
-    <DashboardShell appName="Admin Dashboard" navItems={navItems}>
+    <DashboardShell appName="Admin" navItems={navItems}>
       {children}
     </DashboardShell>
   );
