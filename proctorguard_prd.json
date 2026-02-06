@@ -1,0 +1,2170 @@
+{
+  "document": {
+    "title": "Product Requirements Document",
+    "product_name": "ProctorGuard",
+    "subtitle": "Enterprise Online Proctoring Platform",
+    "version": "1.0",
+    "date": "2026-01-28",
+    "status": "Draft for Review",
+    "classification": "Confidential"
+  },
+  "executive_summary": {
+    "overview": "ProctorGuard is an enterprise-grade online proctoring platform designed specifically for corporate customers and professional certification bodies. The platform enables organizations to administer secure, remotely proctored examinations while maintaining full compliance with privacy regulations and accessibility standards.",
+    "key_differentiators": [
+      "Advanced anti-spoofing identity verification",
+      "Comprehensive threat detection for AI assistance and secondary devices",
+      "Transparent appeals process with full evidence access",
+      "Seamless HRIS integration",
+      "Fully automated operation without human proctors",
+      "Explainable AI flagging system"
+    ],
+    "product_vision": "To become the trusted standard for automated online proctoring in corporate and professional certification contexts, where exam integrity, candidate experience, and regulatory compliance are equally prioritized.",
+    "target_market": {
+      "primary_segments": [
+        {
+          "segment": "Corporate Learning & Development",
+          "description": "Departments administering compliance certifications, skills assessments, and professional development exams"
+        },
+        {
+          "segment": "Professional Certification Bodies",
+          "description": "IT certifications, financial services credentials, healthcare licensing, and trade certifications"
+        },
+        {
+          "segment": "Government Agencies",
+          "description": "Organizations requiring secure remote examination capabilities"
+        },
+        {
+          "segment": "Distributed Enterprises",
+          "description": "Organizations with distributed workforces requiring standardized assessment capabilities"
+        }
+      ]
+    }
+  },
+  "threat_model": {
+    "overview": "The platform addresses four primary threat categories representing the most significant risks to exam integrity in corporate and certification contexts.",
+    "threats": [
+      {
+        "id": "TH-001",
+        "name": "AI Assistance",
+        "severity": "Critical",
+        "description": "Candidates may attempt to use AI-powered tools such as ChatGPT, Claude, or specialized exam assistance software to generate answers during proctored examinations.",
+        "attack_vectors": [
+          "Browser-based AI tools",
+          "Mobile AI applications",
+          "Voice-activated AI assistants (Siri, Alexa, Google Assistant)",
+          "AI integrated into secondary devices",
+          "Browser extensions with AI capabilities"
+        ],
+        "detection_requirements": [
+          {
+            "id": "TH-001-D1",
+            "requirement": "Real-time browser activity monitoring to detect attempts to access AI websites, browser extensions, or web-based AI tools"
+          },
+          {
+            "id": "TH-001-D2",
+            "requirement": "Audio monitoring for voice-activated AI assistant detection with keyword spotting for common activation phrases"
+          },
+          {
+            "id": "TH-001-D3",
+            "requirement": "Answer pattern analysis to identify responses characteristic of AI-generated content including vocabulary consistency, response timing patterns, and structural indicators"
+          },
+          {
+            "id": "TH-001-D4",
+            "requirement": "Process monitoring on locked-down devices to detect AI applications running in background"
+          },
+          {
+            "id": "TH-001-D5",
+            "requirement": "Clipboard monitoring to detect paste operations that may indicate content copied from AI tools"
+          },
+          {
+            "id": "TH-001-D6",
+            "requirement": "Network traffic analysis to identify connections to known AI service endpoints"
+          }
+        ],
+        "mitigation_strategies": [
+          "Lockdown browser prevents access to AI websites and blocks known AI browser extensions",
+          "Network traffic analysis to identify connections to AI service endpoints",
+          "Question design guidance for exam creators to develop AI-resistant assessment items",
+          "Regularly updated blocklist of AI service domains and applications"
+        ]
+      },
+      {
+        "id": "TH-002",
+        "name": "Insider Threats",
+        "severity": "High",
+        "description": "Scenarios where individuals with legitimate access to exam content, systems, or processes abuse their privileges, including exam administrators leaking questions, IT staff manipulating results, or collusion between personnel and candidates.",
+        "attack_vectors": [
+          "Exam content leakage by administrators",
+          "Result manipulation by IT staff",
+          "Collusion between proctoring personnel and candidates",
+          "Managers providing unauthorized assistance to team members",
+          "Unauthorized bulk export of exam questions"
+        ],
+        "detection_requirements": [
+          {
+            "id": "TH-002-D1",
+            "requirement": "Comprehensive audit logging of all administrative actions including exam content access, result modifications, and configuration changes"
+          },
+          {
+            "id": "TH-002-D2",
+            "requirement": "Anomaly detection for unusual access patterns such as bulk question exports, after-hours access, or access from unusual locations"
+          },
+          {
+            "id": "TH-002-D3",
+            "requirement": "Statistical analysis of exam results to identify suspicious patterns indicating advance knowledge of questions"
+          },
+          {
+            "id": "TH-002-D4",
+            "requirement": "Segregation of duties enforcement preventing single individuals from both creating and administering exams"
+          }
+        ],
+        "mitigation_strategies": [
+          "Role-based access control with principle of least privilege",
+          "Multi-party approval workflows for sensitive operations",
+          "Encryption of exam content at rest with multi-custodian key management",
+          "Immutable audit logs stored separately from operational systems",
+          "Mandatory access reviews on quarterly basis"
+        ]
+      },
+      {
+        "id": "TH-003",
+        "name": "Impersonation",
+        "severity": "Critical",
+        "description": "Someone other than the registered candidate attempts to take an exam on their behalf, ranging from complete proxy substitution to partial assistance for specific questions.",
+        "attack_vectors": [
+          "Complete proxy substitution (another person takes entire exam)",
+          "Partial assistance (someone provides answers for specific questions)",
+          "Photo or video spoofing during identity verification",
+          "Mask or prosthetic use to defeat facial recognition",
+          "Mid-exam substitution during breaks"
+        ],
+        "detection_requirements": [
+          {
+            "id": "TH-003-D1",
+            "requirement": "Pre-exam identity verification comparing live capture against government-issued photo ID with anti-spoofing measures"
+          },
+          {
+            "id": "TH-003-D2",
+            "requirement": "Continuous facial recognition throughout the exam session to verify the same person remains present"
+          },
+          {
+            "id": "TH-003-D3",
+            "requirement": "Detection of multiple faces in the camera frame indicating potential assistance"
+          },
+          {
+            "id": "TH-003-D4",
+            "requirement": "Behavioral biometrics including typing patterns and mouse movement characteristics to detect mid-exam substitution"
+          },
+          {
+            "id": "TH-003-D5",
+            "requirement": "Voice recognition for audio-based verification if enabled"
+          }
+        ],
+        "mitigation_strategies": [
+          "Liveness detection to prevent use of photos, videos, or masks",
+          "Periodic re-verification prompts during longer exams",
+          "Integration with HRIS to validate candidate employment status and organizational affiliation",
+          "Challenge-response verification requiring specific actions"
+        ]
+      },
+      {
+        "id": "TH-004",
+        "name": "Secondary Devices",
+        "severity": "High",
+        "description": "Candidates use secondary devices such as smartphones, tablets, smartwatches, or additional computers to access unauthorized resources during exams.",
+        "attack_vectors": [
+          "Smartphone for searching answers or communicating",
+          "Tablet displaying reference materials",
+          "Smartwatch receiving messages or displaying notes",
+          "Secondary computer or monitor",
+          "Earbuds for audio assistance",
+          "Smart glasses or AR devices"
+        ],
+        "detection_requirements": [
+          {
+            "id": "TH-004-D1",
+            "requirement": "Visual detection of secondary devices in the camera frame using computer vision"
+          },
+          {
+            "id": "TH-004-D2",
+            "requirement": "Audio analysis for notification sounds, vibrations, or conversation indicating device use"
+          },
+          {
+            "id": "TH-004-D3",
+            "requirement": "Detection of reflective surfaces that might display secondary device content"
+          },
+          {
+            "id": "TH-004-D4",
+            "requirement": "Gaze tracking to identify frequent off-screen looks indicating device reference"
+          },
+          {
+            "id": "TH-004-D5",
+            "requirement": "Network scanning to identify additional devices on the same local network during exam session"
+          }
+        ],
+        "mitigation_strategies": [
+          "Mandatory room scan procedure before exam start",
+          "Optional phone sequestration feature requiring phones in view or confirmed elsewhere",
+          "Clear pre-exam instructions about prohibited devices with acknowledgment requirement",
+          "Periodic random environment checks during exam"
+        ]
+      }
+    ]
+  },
+  "technical_architecture": {
+    "overview": "ProctorGuard employs a hybrid web and native application architecture deployed in a single-region cloud environment, balancing accessibility, security, and operational simplicity.",
+    "deployment_model": {
+      "type": "Single-region cloud deployment",
+      "cloud_providers_supported": ["AWS", "Azure", "GCP"],
+      "data_residency": "All data stored within selected region to meet compliance requirements",
+      "disaster_recovery": "Cross-availability-zone replication with defined RTO and RPO"
+    },
+    "components": {
+      "web_application": {
+        "type": "Progressive Web App (PWA)",
+        "purpose": "Exam delivery and administration",
+        "modules": [
+          {
+            "name": "Candidate Portal",
+            "features": [
+              "Exam scheduling and calendar integration",
+              "Pre-exam system compatibility checks",
+              "Exam delivery for non-locked-down assessments",
+              "Result viewing and certificate access",
+              "Appeals submission and tracking",
+              "Profile and accommodation management"
+            ]
+          },
+          {
+            "name": "Administration Console",
+            "features": [
+              "Exam configuration and question bank management",
+              "Candidate management and bulk import",
+              "Real-time monitoring dashboard",
+              "Incident review and adjudication",
+              "Reporting and analytics",
+              "HRIS integration management",
+              "System configuration and settings"
+            ]
+          },
+          {
+            "name": "Appeals Portal",
+            "features": [
+              "Evidence viewer with synchronized playback",
+              "Appeal submission workflow",
+              "Communication thread management",
+              "Decision documentation and notification"
+            ]
+          }
+        ]
+      },
+      "native_applications": {
+        "platforms": ["Windows 10/11", "macOS 11+"],
+        "purpose": "Lockdown browser for secure exam delivery",
+        "features": [
+          "Secure browser environment preventing unauthorized application access",
+          "Screen capture and recording prevention",
+          "System process monitoring",
+          "Webcam and microphone integration",
+          "Network traffic monitoring",
+          "Clipboard isolation",
+          "Virtual machine detection",
+          "Remote desktop detection and blocking"
+        ]
+      }
+    },
+    "infrastructure": {
+      "compute": {
+        "web_tier": "Auto-scaling container orchestration (Kubernetes/ECS)",
+        "api_tier": "Serverless functions for event processing, containerized services for core API",
+        "ml_inference": "GPU-enabled instances for real-time AI analysis"
+      },
+      "storage": {
+        "database": "Managed PostgreSQL for transactional data",
+        "document_store": "MongoDB or DocumentDB for session recordings metadata",
+        "object_storage": "S3/Blob storage for video recordings and evidence",
+        "cache": "Redis for session management and real-time data"
+      },
+      "networking": {
+        "cdn": "CloudFront/Azure CDN for static assets and application delivery",
+        "load_balancing": "Application load balancer with SSL termination",
+        "api_gateway": "Managed API gateway for rate limiting and authentication"
+      },
+      "security": {
+        "encryption_at_rest": "AES-256 for all stored data",
+        "encryption_in_transit": "TLS 1.3 for all communications",
+        "key_management": "HSM-backed key management service",
+        "waf": "Web Application Firewall for threat protection"
+      }
+    }
+  },
+  "identity_verification": {
+    "overview": "Comprehensive identity verification system with advanced anti-spoofing measures to prevent impersonation attacks.",
+    "verification_flow": {
+      "steps": [
+        {
+          "step": 1,
+          "name": "Document Capture",
+          "description": "Candidate photographs government-issued ID using device camera",
+          "requirements": [
+            "Support for passport, driver's license, national ID cards",
+            "Automatic document type detection",
+            "Image quality validation with guidance for recapture",
+            "OCR extraction of document fields"
+          ]
+        },
+        {
+          "step": 2,
+          "name": "Document Validation",
+          "description": "Automated verification of document authenticity",
+          "requirements": [
+            "Security feature detection (holograms, microprinting indicators)",
+            "Format and structure validation against known templates",
+            "Expiration date verification",
+            "Tampering detection"
+          ]
+        },
+        {
+          "step": 3,
+          "name": "Biometric Capture",
+          "description": "Live capture of candidate facial biometrics",
+          "requirements": [
+            "High-resolution facial image capture",
+            "Lighting and positioning guidance",
+            "Multiple angle capture for 3D modeling where supported"
+          ]
+        },
+        {
+          "step": 4,
+          "name": "Liveness Detection",
+          "description": "Anti-spoofing verification to confirm live person",
+          "requirements": [
+            "Active liveness challenges (head movement, expression changes)",
+            "Passive liveness analysis (texture, depth, reflection patterns)",
+            "Presentation attack detection (photos, videos, masks, deepfakes)",
+            "Minimum confidence threshold configurable by organization"
+          ]
+        },
+        {
+          "step": 5,
+          "name": "Face Matching",
+          "description": "Comparison of live capture against ID document photo",
+          "requirements": [
+            "High-accuracy facial recognition algorithm",
+            "Tolerance for aging and minor appearance changes",
+            "Configurable match threshold with organizational override",
+            "Fallback to manual review for edge cases"
+          ]
+        },
+        {
+          "step": 6,
+          "name": "HRIS Validation",
+          "description": "Cross-reference against organizational employee records",
+          "requirements": [
+            "Name and employee ID matching",
+            "Employment status verification (active employee)",
+            "Department and role validation if required",
+            "Photo comparison against HRIS profile photo if available"
+          ]
+        }
+      ]
+    },
+    "anti_spoofing_measures": {
+      "presentation_attack_detection": {
+        "description": "Detection of attempts to present fake biometric samples",
+        "capabilities": [
+          {
+            "attack_type": "Printed Photo",
+            "detection_method": "Texture analysis, lack of 3D depth, reflection patterns"
+          },
+          {
+            "attack_type": "Digital Screen Display",
+            "detection_method": "Moire pattern detection, screen reflection, pixel artifacts"
+          },
+          {
+            "attack_type": "Video Replay",
+            "detection_method": "Challenge-response mismatch, motion pattern analysis"
+          },
+          {
+            "attack_type": "3D Mask",
+            "detection_method": "Skin texture analysis, eye reflection analysis, thermal patterns if available"
+          },
+          {
+            "attack_type": "Deepfake",
+            "detection_method": "Temporal inconsistency detection, facial landmark analysis, generation artifact detection"
+          }
+        ]
+      },
+      "continuous_verification": {
+        "description": "Ongoing identity verification throughout exam session",
+        "features": [
+          "Periodic face re-verification at configurable intervals",
+          "Continuous presence detection",
+          "Alert on face not detected for configurable duration",
+          "Multiple face detection triggering immediate flag"
+        ]
+      }
+    },
+    "requirements": [
+      {
+        "id": "IDV-001",
+        "priority": "Must Have",
+        "requirement": "System shall support government-issued photo ID verification including passports, driver's licenses, and national ID cards"
+      },
+      {
+        "id": "IDV-002",
+        "priority": "Must Have",
+        "requirement": "System shall implement active and passive liveness detection achieving minimum 99.5% accuracy against presentation attacks"
+      },
+      {
+        "id": "IDV-003",
+        "priority": "Must Have",
+        "requirement": "System shall perform continuous facial recognition throughout exam session with configurable verification intervals"
+      },
+      {
+        "id": "IDV-004",
+        "priority": "Must Have",
+        "requirement": "System shall detect and flag multiple faces in camera frame within 2 seconds"
+      },
+      {
+        "id": "IDV-005",
+        "priority": "Should Have",
+        "requirement": "System shall integrate with HRIS to validate candidate identity against employee records"
+      },
+      {
+        "id": "IDV-006",
+        "priority": "Must Have",
+        "requirement": "System shall provide fallback verification workflow when automated verification fails"
+      },
+      {
+        "id": "IDV-007",
+        "priority": "Must Have",
+        "requirement": "Anti-spoofing system shall detect printed photos, screen displays, video replays, and 3D masks with minimum 99% accuracy"
+      }
+    ]
+  },
+  "environment_control": {
+    "overview": "Lockdown browser implementation ensuring candidates cannot access unauthorized resources during examinations.",
+    "lockdown_browser": {
+      "description": "Native application creating a secure, isolated environment for exam delivery",
+      "supported_platforms": [
+        {
+          "platform": "Windows",
+          "minimum_version": "Windows 10 (1903+)",
+          "architecture": ["x64"]
+        },
+        {
+          "platform": "macOS",
+          "minimum_version": "macOS 11 (Big Sur)",
+          "architecture": ["x64", "ARM64 (Apple Silicon)"]
+        }
+      ],
+      "core_capabilities": {
+        "browser_restrictions": [
+          "Single full-screen window without minimize, resize, or close options during exam",
+          "Disabled address bar preventing URL entry",
+          "Blocked navigation controls (back, forward, refresh hotkeys)",
+          "Disabled right-click context menus",
+          "Blocked browser extensions and plugins",
+          "Disabled developer tools access",
+          "Prevented new window or tab creation"
+        ],
+        "system_restrictions": [
+          "Application switching blocked (Alt+Tab, Cmd+Tab disabled)",
+          "Task manager access prevented",
+          "System tray and notification center suppressed",
+          "Screen capture and recording software blocked",
+          "Clipboard cleared on exam start and isolated during exam",
+          "Print functionality disabled",
+          "Virtual machine detection with configurable policy"
+        ],
+        "network_controls": [
+          "DNS filtering to block known unauthorized domains",
+          "Traffic monitoring for suspicious connections",
+          "Allowlist mode permitting only exam-related endpoints",
+          "VPN and proxy detection"
+        ],
+        "process_monitoring": [
+          "Detection of prohibited applications attempting to launch",
+          "Monitoring for screen sharing software",
+          "Detection of remote desktop connections",
+          "Background process scanning for AI tools and communication applications"
+        ]
+      },
+      "exam_flow": {
+        "pre_exam": [
+          "System compatibility verification",
+          "Required permissions check (camera, microphone)",
+          "Background application closure prompt",
+          "Environment scan initialization"
+        ],
+        "during_exam": [
+          "Continuous environment monitoring",
+          "Periodic integrity checks",
+          "Incident logging and flagging",
+          "Secure exam content delivery"
+        ],
+        "post_exam": [
+          "Graceful unlock of system restrictions",
+          "Session data upload completion verification",
+          "Return to normal system operation"
+        ]
+      }
+    },
+    "requirements": [
+      {
+        "id": "ENV-001",
+        "priority": "Must Have",
+        "requirement": "Lockdown browser shall prevent access to all applications except the exam interface during active exam sessions"
+      },
+      {
+        "id": "ENV-002",
+        "priority": "Must Have",
+        "requirement": "System shall block all keyboard shortcuts that could be used to switch applications or access system functions"
+      },
+      {
+        "id": "ENV-003",
+        "priority": "Must Have",
+        "requirement": "System shall detect and block screen capture, screen recording, and screen sharing software"
+      },
+      {
+        "id": "ENV-004",
+        "priority": "Must Have",
+        "requirement": "System shall detect virtual machine environments and enforce configurable policy (block or allow with flag)"
+      },
+      {
+        "id": "ENV-005",
+        "priority": "Must Have",
+        "requirement": "System shall detect remote desktop connections and prevent exam delivery when detected"
+      },
+      {
+        "id": "ENV-006",
+        "priority": "Must Have",
+        "requirement": "System shall isolate clipboard contents preventing copy/paste from external sources"
+      },
+      {
+        "id": "ENV-007",
+        "priority": "Should Have",
+        "requirement": "System shall perform network traffic analysis to detect connections to unauthorized services"
+      },
+      {
+        "id": "ENV-008",
+        "priority": "Must Have",
+        "requirement": "System shall provide graceful degradation and recovery if lockdown browser crashes during exam"
+      }
+    ]
+  },
+  "ai_explainable_flags": {
+    "overview": "AI-powered behavior analysis system providing transparent, explainable flags for potential integrity violations with full audit trail and evidence linking.",
+    "design_principles": [
+      {
+        "principle": "Transparency",
+        "description": "Every flag must be accompanied by clear, human-understandable explanation of why it was triggered"
+      },
+      {
+        "principle": "Evidence-Based",
+        "description": "All flags must be linked to specific, reviewable evidence (video timestamps, audio clips, screenshots)"
+      },
+      {
+        "principle": "Confidence Scoring",
+        "description": "Each flag includes confidence level to support appropriate escalation and review prioritization"
+      },
+      {
+        "principle": "Bias Awareness",
+        "description": "System actively monitors for and mitigates demographic bias in flag generation"
+      },
+      {
+        "principle": "Predictability",
+        "description": "Consistent flagging behavior across similar situations to build user trust"
+      }
+    ],
+    "flag_categories": [
+      {
+        "category": "Identity Anomalies",
+        "flags": [
+          {
+            "flag_id": "ID-001",
+            "name": "Face Not Detected",
+            "description": "Candidate's face not visible in camera frame",
+            "explanation_template": "Face not detected in camera frame for {duration} seconds starting at {timestamp}. The candidate may have moved out of frame or camera may be obstructed.",
+            "evidence_types": ["video_clip", "screenshot_sequence"],
+            "severity": "Medium",
+            "auto_resolution": "Clears when face detected again"
+          },
+          {
+            "flag_id": "ID-002",
+            "name": "Multiple Faces Detected",
+            "description": "More than one face visible in camera frame",
+            "explanation_template": "Additional face detected in camera frame at {timestamp}. {count} faces were visible for {duration} seconds. This may indicate unauthorized assistance.",
+            "evidence_types": ["video_clip", "annotated_screenshot"],
+            "severity": "High",
+            "auto_resolution": "None - requires review"
+          },
+          {
+            "flag_id": "ID-003",
+            "name": "Face Mismatch",
+            "description": "Current face does not match verified identity",
+            "explanation_template": "Facial recognition confidence dropped to {confidence}% at {timestamp}, below the {threshold}% threshold. The current face may not match the verified candidate.",
+            "evidence_types": ["comparison_image", "video_clip"],
+            "severity": "Critical",
+            "auto_resolution": "None - requires review"
+          }
+        ]
+      },
+      {
+        "category": "Environment Anomalies",
+        "flags": [
+          {
+            "flag_id": "ENV-001",
+            "name": "Secondary Device Detected",
+            "description": "Potential secondary device visible in frame",
+            "explanation_template": "Object identified as potential {device_type} detected at {timestamp} in {location} of frame with {confidence}% confidence.",
+            "evidence_types": ["annotated_screenshot", "video_clip"],
+            "severity": "High",
+            "auto_resolution": "None - requires review"
+          },
+          {
+            "flag_id": "ENV-002",
+            "name": "Suspicious Audio",
+            "description": "Audio anomaly detected suggesting external assistance",
+            "explanation_template": "Audio analysis detected {audio_type} at {timestamp}. Characteristics: {description}. This may indicate {interpretation}.",
+            "evidence_types": ["audio_clip", "spectrogram"],
+            "severity": "Medium",
+            "auto_resolution": "None - requires review"
+          },
+          {
+            "flag_id": "ENV-003",
+            "name": "Gaze Deviation",
+            "description": "Candidate looking away from screen frequently",
+            "explanation_template": "Candidate gaze direction deviated significantly from screen {count} times in {duration} minute period ending at {timestamp}. Average deviation: {degrees} degrees {direction}.",
+            "evidence_types": ["gaze_heatmap", "video_clip"],
+            "severity": "Low",
+            "auto_resolution": "Auto-clears if pattern normalizes"
+          }
+        ]
+      },
+      {
+        "category": "System Anomalies",
+        "flags": [
+          {
+            "flag_id": "SYS-001",
+            "name": "Prohibited Application Detected",
+            "description": "Attempt to access blocked application",
+            "explanation_template": "Attempt to launch or switch to prohibited application '{app_name}' detected at {timestamp}. Application category: {category}. Action taken: {action}.",
+            "evidence_types": ["system_log", "screenshot"],
+            "severity": "High",
+            "auto_resolution": "None - logged for review"
+          },
+          {
+            "flag_id": "SYS-002",
+            "name": "Network Anomaly",
+            "description": "Suspicious network activity detected",
+            "explanation_template": "Connection attempt to {domain} detected at {timestamp}. This domain is categorized as {category}. Connection was {action}.",
+            "evidence_types": ["network_log"],
+            "severity": "Medium",
+            "auto_resolution": "None - logged for review"
+          },
+          {
+            "flag_id": "SYS-003",
+            "name": "Browser Integrity Violation",
+            "description": "Attempt to bypass browser lockdown",
+            "explanation_template": "Browser lockdown integrity check failed at {timestamp}. Violation type: {violation_type}. This may indicate an attempt to {interpretation}.",
+            "evidence_types": ["system_log", "screenshot"],
+            "severity": "Critical",
+            "auto_resolution": "None - requires review"
+          }
+        ]
+      },
+      {
+        "category": "Behavioral Anomalies",
+        "flags": [
+          {
+            "flag_id": "BEH-001",
+            "name": "Response Pattern Anomaly",
+            "description": "Answer patterns suggest potential AI assistance",
+            "explanation_template": "Response to question {question_id} shows characteristics associated with AI-generated content. Indicators: {indicators}. Confidence: {confidence}%.",
+            "evidence_types": ["response_text", "timing_analysis"],
+            "severity": "Medium",
+            "auto_resolution": "None - requires review"
+          },
+          {
+            "flag_id": "BEH-002",
+            "name": "Timing Anomaly",
+            "description": "Response timing suggests external resource use",
+            "explanation_template": "Response time for question {question_id} was {time} which is {deviation} standard deviations from expected. Pattern suggests {interpretation}.",
+            "evidence_types": ["timing_chart", "video_clip"],
+            "severity": "Low",
+            "auto_resolution": "None - logged for pattern analysis"
+          },
+          {
+            "flag_id": "BEH-003",
+            "name": "Typing Pattern Change",
+            "description": "Significant change in typing behavior detected",
+            "explanation_template": "Typing pattern analysis shows significant deviation from baseline at {timestamp}. Metrics changed: {metrics}. This may indicate {interpretation}.",
+            "evidence_types": ["typing_analysis", "video_clip"],
+            "severity": "Medium",
+            "auto_resolution": "None - requires review"
+          }
+        ]
+      }
+    ],
+    "explainability_features": {
+      "natural_language_explanations": {
+        "description": "All flags include human-readable explanations suitable for candidates and reviewers",
+        "requirements": [
+          "Explanations written at 8th grade reading level",
+          "Technical jargon avoided or defined",
+          "Specific evidence cited in each explanation",
+          "Possible innocent explanations acknowledged where applicable"
+        ]
+      },
+      "evidence_linking": {
+        "description": "Direct links from flags to supporting evidence",
+        "requirements": [
+          "One-click navigation from flag to evidence",
+          "Synchronized playback of video/audio at exact timestamp",
+          "Side-by-side comparison views for identity flags",
+          "Evidence preservation with chain of custody"
+        ]
+      },
+      "confidence_scoring": {
+        "description": "Quantified confidence levels for all AI-generated flags",
+        "levels": [
+          {
+            "level": "High",
+            "range": "90-100%",
+            "interpretation": "Strong evidence of violation",
+            "recommended_action": "Immediate review required"
+          },
+          {
+            "level": "Medium",
+            "range": "70-89%",
+            "interpretation": "Moderate evidence requiring investigation",
+            "recommended_action": "Review within 24 hours"
+          },
+          {
+            "level": "Low",
+            "range": "50-69%",
+            "interpretation": "Weak signal, may be false positive",
+            "recommended_action": "Log for pattern analysis"
+          }
+        ]
+      },
+      "bias_monitoring": {
+        "description": "Continuous monitoring for demographic bias in flag generation",
+        "requirements": [
+          "Aggregate flag rate analysis by demographic group",
+          "Alert when disparity exceeds configurable threshold",
+          "Regular bias audit reports",
+          "Model retraining triggers when bias detected"
+        ]
+      }
+    },
+    "requirements": [
+      {
+        "id": "XAI-001",
+        "priority": "Must Have",
+        "requirement": "Every AI-generated flag shall include a natural language explanation describing the specific behavior or event that triggered the flag"
+      },
+      {
+        "id": "XAI-002",
+        "priority": "Must Have",
+        "requirement": "Every flag shall be linked to specific, timestamped evidence that can be reviewed by candidates and administrators"
+      },
+      {
+        "id": "XAI-003",
+        "priority": "Must Have",
+        "requirement": "All flags shall include a confidence score indicating the AI system's certainty level"
+      },
+      {
+        "id": "XAI-004",
+        "priority": "Must Have",
+        "requirement": "System shall maintain complete audit trail of all flag generation, review, and resolution activities"
+      },
+      {
+        "id": "XAI-005",
+        "priority": "Should Have",
+        "requirement": "System shall provide bias monitoring dashboard showing flag distribution across demographic groups"
+      },
+      {
+        "id": "XAI-006",
+        "priority": "Must Have",
+        "requirement": "Flag explanations shall acknowledge alternative innocent explanations where applicable"
+      },
+      {
+        "id": "XAI-007",
+        "priority": "Must Have",
+        "requirement": "System shall provide consistent flagging behavior across similar situations to ensure predictability"
+      }
+    ]
+  },
+  "legal_compliance": {
+    "overview": "Comprehensive compliance framework ensuring adherence to privacy regulations and providing candidates with fundamental rights throughout the examination process.",
+    "privacy_compliance": {
+      "supported_frameworks": [
+        {
+          "framework": "GDPR",
+          "region": "European Union",
+          "key_requirements": [
+            "Explicit consent before data collection",
+            "Data minimization principles",
+            "Right to access personal data",
+            "Right to erasure (right to be forgotten)",
+            "Data portability",
+            "Privacy by design implementation"
+          ]
+        },
+        {
+          "framework": "CCPA/CPRA",
+          "region": "California, USA",
+          "key_requirements": [
+            "Right to know what data is collected",
+            "Right to delete personal information",
+            "Right to opt-out of data sale",
+            "Non-discrimination for exercising rights"
+          ]
+        },
+        {
+          "framework": "BIPA",
+          "region": "Illinois, USA",
+          "key_requirements": [
+            "Written consent before biometric data collection",
+            "Published biometric data retention policy",
+            "Prohibition on selling biometric data",
+            "Secure storage and transmission"
+          ]
+        },
+        {
+          "framework": "PIPEDA",
+          "region": "Canada",
+          "key_requirements": [
+            "Meaningful consent for data collection",
+            "Limited collection to necessary purposes",
+            "Individual access to personal information",
+            "Accuracy and safeguard requirements"
+          ]
+        }
+      ],
+      "implementation_features": {
+        "consent_management": {
+          "description": "Comprehensive consent collection and management",
+          "requirements": [
+            "Granular consent options for different data types",
+            "Clear, plain-language consent notices",
+            "Consent versioning and history tracking",
+            "Easy consent withdrawal mechanism",
+            "Consent refresh for policy updates"
+          ]
+        },
+        "data_minimization": {
+          "description": "Collection limited to necessary data only",
+          "requirements": [
+            "Configurable monitoring intensity levels",
+            "Option to disable specific monitoring features",
+            "Automatic data deletion after retention period",
+            "No collection of data beyond stated purposes"
+          ]
+        },
+        "data_subject_rights": {
+          "description": "Tools for candidates to exercise their data rights",
+          "requirements": [
+            "Self-service data access portal",
+            "Automated data export in portable formats",
+            "Data deletion request workflow",
+            "Processing restriction capabilities"
+          ]
+        },
+        "data_protection": {
+          "description": "Technical measures protecting personal data",
+          "requirements": [
+            "Encryption at rest and in transit",
+            "Access controls with audit logging",
+            "Anonymization for analytics",
+            "Secure deletion procedures"
+          ]
+        }
+      }
+    },
+    "right_to_appeal": {
+      "description": "Structured process for candidates to contest exam results or integrity violations",
+      "workflow": {
+        "stages": [
+          {
+            "stage": 1,
+            "name": "Appeal Submission",
+            "description": "Candidate initiates appeal through self-service portal",
+            "requirements": [
+              "Clear grounds for appeal selection",
+              "Supporting statement submission",
+              "Evidence upload capability",
+              "Automatic acknowledgment within 1 hour"
+            ],
+            "sla": "Submission available immediately after result notification"
+          },
+          {
+            "stage": 2,
+            "name": "Initial Review",
+            "description": "Automated completeness check and routing",
+            "requirements": [
+              "Validation of appeal completeness",
+              "Automatic routing based on appeal type",
+              "Assignment to appropriate reviewer",
+              "Candidate notification of review commencement"
+            ],
+            "sla": "Within 24 hours of submission"
+          },
+          {
+            "stage": 3,
+            "name": "Evidence Review",
+            "description": "Detailed review of all relevant evidence",
+            "requirements": [
+              "Full access to exam session recording",
+              "Review of all AI flags and explanations",
+              "Comparison against similar cases",
+              "Documentation of findings"
+            ],
+            "sla": "Within 5 business days"
+          },
+          {
+            "stage": 4,
+            "name": "Decision",
+            "description": "Determination and communication of outcome",
+            "requirements": [
+              "Detailed written decision with rationale",
+              "Specific evidence citations",
+              "Clear outcome statement",
+              "Information about further escalation options"
+            ],
+            "sla": "Within 7 business days of submission"
+          },
+          {
+            "stage": 5,
+            "name": "Escalation (if requested)",
+            "description": "Secondary review by independent panel",
+            "requirements": [
+              "Review by personnel not involved in initial decision",
+              "Fresh review of all evidence",
+              "Final binding decision",
+              "Detailed rationale documentation"
+            ],
+            "sla": "Within 14 business days of escalation request"
+          }
+        ]
+      }
+    },
+    "right_to_explanation": {
+      "description": "Candidate right to understand automated decisions affecting their exam outcome",
+      "requirements": [
+        {
+          "id": "RTE-001",
+          "requirement": "Candidates shall receive clear explanation of any AI-generated flags that contributed to adverse decisions"
+        },
+        {
+          "id": "RTE-002",
+          "requirement": "Explanations shall describe the specific data inputs that led to the automated decision"
+        },
+        {
+          "id": "RTE-003",
+          "requirement": "Candidates shall have access to view all evidence used in automated decision-making"
+        },
+        {
+          "id": "RTE-004",
+          "requirement": "System shall provide information about how to contest automated decisions"
+        },
+        {
+          "id": "RTE-005",
+          "requirement": "No fully automated adverse decisions - human review required before any negative outcome"
+        }
+      ]
+    },
+    "compliance_requirements": [
+      {
+        "id": "LEG-001",
+        "priority": "Must Have",
+        "requirement": "System shall obtain explicit, informed consent before collecting biometric data"
+      },
+      {
+        "id": "LEG-002",
+        "priority": "Must Have",
+        "requirement": "System shall provide candidates with access to all personal data collected during their exam sessions"
+      },
+      {
+        "id": "LEG-003",
+        "priority": "Must Have",
+        "requirement": "System shall support data deletion requests with complete removal within 30 days"
+      },
+      {
+        "id": "LEG-004",
+        "priority": "Must Have",
+        "requirement": "System shall maintain detailed audit logs of all data processing activities"
+      },
+      {
+        "id": "LEG-005",
+        "priority": "Must Have",
+        "requirement": "System shall provide structured appeals process with defined SLAs for each stage"
+      },
+      {
+        "id": "LEG-006",
+        "priority": "Must Have",
+        "requirement": "System shall ensure human review of all AI-generated flags before adverse decisions"
+      },
+      {
+        "id": "LEG-007",
+        "priority": "Must Have",
+        "requirement": "System shall provide clear, understandable explanations for all automated decisions"
+      },
+      {
+        "id": "LEG-008",
+        "priority": "Should Have",
+        "requirement": "System shall support configurable data retention periods to meet varying regulatory requirements"
+      }
+    ]
+  },
+  "accessibility": {
+    "overview": "Comprehensive accessibility implementation ensuring the platform is usable by candidates with diverse abilities, with particular emphasis on keyboard-only navigation.",
+    "standards_compliance": {
+      "primary_standard": "WCAG 2.1 Level AA",
+      "additional_standards": [
+        "Section 508 (US Federal)",
+        "EN 301 549 (European)",
+        "ADA (Americans with Disabilities Act)"
+      ]
+    },
+    "keyboard_navigation": {
+      "description": "Complete platform functionality accessible via keyboard-only interaction",
+      "requirements": [
+        {
+          "id": "KB-001",
+          "requirement": "All interactive elements shall be reachable and operable using only the keyboard"
+        },
+        {
+          "id": "KB-002",
+          "requirement": "Visible focus indicator shall be present on all focused elements with minimum 3:1 contrast ratio"
+        },
+        {
+          "id": "KB-003",
+          "requirement": "Logical tab order following visual layout and reading order"
+        },
+        {
+          "id": "KB-004",
+          "requirement": "Skip navigation links allowing users to bypass repetitive content"
+        },
+        {
+          "id": "KB-005",
+          "requirement": "No keyboard traps - users can navigate away from all components"
+        },
+        {
+          "id": "KB-006",
+          "requirement": "Keyboard shortcuts for common exam actions with customization options"
+        },
+        {
+          "id": "KB-007",
+          "requirement": "Focus management ensuring focus moves appropriately after dynamic content changes"
+        }
+      ],
+      "keyboard_shortcuts": [
+        {
+          "action": "Next question",
+          "shortcut": "Alt + N",
+          "customizable": true
+        },
+        {
+          "action": "Previous question",
+          "shortcut": "Alt + P",
+          "customizable": true
+        },
+        {
+          "action": "Flag question for review",
+          "shortcut": "Alt + F",
+          "customizable": true
+        },
+        {
+          "action": "Submit answer",
+          "shortcut": "Alt + S",
+          "customizable": true
+        },
+        {
+          "action": "Open question navigator",
+          "shortcut": "Alt + Q",
+          "customizable": true
+        },
+        {
+          "action": "Access help",
+          "shortcut": "Alt + H",
+          "customizable": true
+        }
+      ]
+    },
+    "additional_accessibility_features": {
+      "visual": [
+        "Screen reader compatibility with ARIA labels and landmarks",
+        "High contrast mode option",
+        "Configurable font sizes (50% to 200% scaling)",
+        "Color not used as sole means of conveying information",
+        "Minimum 4.5:1 contrast ratio for normal text"
+      ],
+      "motor": [
+        "Extended time accommodations",
+        "Adjustable click/tap target sizes (minimum 44x44 pixels)",
+        "Reduced motion option for animations",
+        "Single-hand operation mode"
+      ],
+      "cognitive": [
+        "Clear, consistent navigation structure",
+        "Progress indicators showing exam position",
+        "Confirmation dialogs for significant actions",
+        "Option to review answers before submission",
+        "Plain language option for instructions"
+      ],
+      "auditory": [
+        "Captions for any audio content",
+        "Visual alerts as alternative to audio notifications",
+        "Transcript availability for recorded content"
+      ]
+    },
+    "accommodation_management": {
+      "description": "System for requesting and applying exam accommodations",
+      "workflow": [
+        {
+          "step": 1,
+          "name": "Accommodation Request",
+          "description": "Candidate or administrator submits accommodation request with supporting documentation"
+        },
+        {
+          "step": 2,
+          "name": "Review and Approval",
+          "description": "Designated accommodation reviewer evaluates request"
+        },
+        {
+          "step": 3,
+          "name": "Configuration",
+          "description": "Approved accommodations applied to candidate's exam profile"
+        },
+        {
+          "step": 4,
+          "name": "Verification",
+          "description": "Candidate confirms accommodations before exam start"
+        }
+      ],
+      "supported_accommodations": [
+        {
+          "type": "Extended Time",
+          "description": "Additional time beyond standard exam duration",
+          "options": ["25% extension", "50% extension", "100% extension", "Custom duration"]
+        },
+        {
+          "type": "Breaks",
+          "description": "Scheduled or on-demand breaks during exam",
+          "options": ["Scheduled breaks", "On-demand breaks", "Extended break duration"]
+        },
+        {
+          "type": "Screen Reader",
+          "description": "Compatibility mode for screen reader users",
+          "options": ["JAWS", "NVDA", "VoiceOver", "Other"]
+        },
+        {
+          "type": "Visual Adjustments",
+          "description": "Modified visual presentation",
+          "options": ["Large print", "High contrast", "Screen magnification compatible"]
+        },
+        {
+          "type": "Alternative Input",
+          "description": "Support for alternative input devices",
+          "options": ["Voice input", "Switch control", "Eye tracking", "Single switch scanning"]
+        },
+        {
+          "type": "Modified Proctoring",
+          "description": "Adjusted monitoring parameters",
+          "options": ["Relaxed gaze tracking", "Movement allowances", "Assistance person present"]
+        }
+      ]
+    },
+    "accessibility_requirements": [
+      {
+        "id": "ACC-001",
+        "priority": "Must Have",
+        "requirement": "All exam functionality shall be operable using keyboard-only navigation"
+      },
+      {
+        "id": "ACC-002",
+        "priority": "Must Have",
+        "requirement": "Platform shall achieve WCAG 2.1 Level AA compliance"
+      },
+      {
+        "id": "ACC-003",
+        "priority": "Must Have",
+        "requirement": "Screen reader users shall be able to complete all exam tasks independently"
+      },
+      {
+        "id": "ACC-004",
+        "priority": "Must Have",
+        "requirement": "System shall support configurable time accommodations without manual intervention"
+      },
+      {
+        "id": "ACC-005",
+        "priority": "Should Have",
+        "requirement": "Platform shall undergo annual third-party accessibility audit"
+      },
+      {
+        "id": "ACC-006",
+        "priority": "Must Have",
+        "requirement": "Visible focus indicator shall be present on all interactive elements"
+      },
+      {
+        "id": "ACC-007",
+        "priority": "Should Have",
+        "requirement": "Keyboard shortcuts shall be customizable to avoid conflicts with assistive technology"
+      }
+    ]
+  },
+  "operations": {
+    "overview": "Fully automated operational model eliminating the need for human proctors while maintaining high integrity standards.",
+    "automation_scope": {
+      "fully_automated_processes": [
+        {
+          "process": "Identity Verification",
+          "description": "AI-powered document validation and facial recognition",
+          "human_fallback": "Manual review queue for failed verifications"
+        },
+        {
+          "process": "Environment Validation",
+          "description": "Automated room scan analysis and system checks",
+          "human_fallback": "Support chat for technical issues"
+        },
+        {
+          "process": "Real-time Monitoring",
+          "description": "AI behavior analysis and flag generation",
+          "human_fallback": "None during exam - all review is post-exam"
+        },
+        {
+          "process": "Incident Detection",
+          "description": "Automated identification of potential violations",
+          "human_fallback": "Post-exam review for flagged sessions"
+        },
+        {
+          "process": "Exam Delivery",
+          "description": "Question presentation, timing, and submission handling",
+          "human_fallback": "Technical support for system issues"
+        },
+        {
+          "process": "Result Processing",
+          "description": "Automated scoring and initial result determination",
+          "human_fallback": "Review required before adverse integrity decisions"
+        }
+      ],
+      "human_required_processes": [
+        {
+          "process": "Flag Adjudication",
+          "description": "Review of AI-generated flags before adverse decisions",
+          "rationale": "Legal requirement for human oversight of consequential decisions"
+        },
+        {
+          "process": "Appeals Review",
+          "description": "Evaluation of candidate appeals",
+          "rationale": "Right to human review of contested decisions"
+        },
+        {
+          "process": "Accommodation Approval",
+          "description": "Review of accommodation requests requiring judgment",
+          "rationale": "Individual circumstances require human consideration"
+        },
+        {
+          "process": "Exception Handling",
+          "description": "Resolution of edge cases not covered by automation",
+          "rationale": "Complex situations benefit from human judgment"
+        }
+      ]
+    },
+    "automated_workflows": {
+      "exam_lifecycle": {
+        "stages": [
+          {
+            "stage": "Scheduling",
+            "automation": "Self-service booking with automatic capacity management and conflict detection"
+          },
+          {
+            "stage": "Preparation",
+            "automation": "Automated reminder sequences, system check prompts, and readiness validation"
+          },
+          {
+            "stage": "Check-in",
+            "automation": "AI identity verification with real-time feedback and guidance"
+          },
+          {
+            "stage": "Examination",
+            "automation": "Continuous AI monitoring with automated flag generation"
+          },
+          {
+            "stage": "Submission",
+            "automation": "Automated data upload verification and session closure"
+          },
+          {
+            "stage": "Scoring",
+            "automation": "Immediate automated scoring with integrity flag attachment"
+          },
+          {
+            "stage": "Result Release",
+            "automation": "Automated release for clean sessions, hold for flagged sessions pending review"
+          }
+        ]
+      }
+    },
+    "trust_and_predictability": {
+      "description": "Design principles ensuring system behavior is consistent and predictable to build user trust",
+      "principles": [
+        {
+          "principle": "Consistency",
+          "implementation": [
+            "Same behavior patterns across all exam sessions",
+            "Predictable flag thresholds with no hidden criteria",
+            "Documented and published monitoring parameters",
+            "Version-controlled rule changes with advance notice"
+          ]
+        },
+        {
+          "principle": "Transparency",
+          "implementation": [
+            "Clear communication of what is monitored",
+            "Real-time feedback when monitoring detects issues",
+            "Published accuracy metrics for AI systems",
+            "Open methodology documentation"
+          ]
+        },
+        {
+          "principle": "Fairness",
+          "implementation": [
+            "Equal treatment across all candidates",
+            "Regular bias auditing with published results",
+            "Accommodation support without stigma",
+            "Consistent application of policies"
+          ]
+        },
+        {
+          "principle": "Recourse",
+          "implementation": [
+            "Clear paths for addressing concerns",
+            "Timely response to issues",
+            "Human escalation always available",
+            "No punitive action without human review"
+          ]
+        }
+      ]
+    },
+    "operational_requirements": [
+      {
+        "id": "OPS-001",
+        "priority": "Must Have",
+        "requirement": "System shall operate fully automated without requiring human proctors during exam sessions"
+      },
+      {
+        "id": "OPS-002",
+        "priority": "Must Have",
+        "requirement": "System shall require human review before any adverse integrity decision affecting candidate outcomes"
+      },
+      {
+        "id": "OPS-003",
+        "priority": "Must Have",
+        "requirement": "Automated processes shall have defined fallback procedures for failure scenarios"
+      },
+      {
+        "id": "OPS-004",
+        "priority": "Should Have",
+        "requirement": "System shall support 99.9% uptime SLA during scheduled exam windows"
+      },
+      {
+        "id": "OPS-005",
+        "priority": "Must Have",
+        "requirement": "System behavior shall be consistent and predictable across all candidate sessions"
+      },
+      {
+        "id": "OPS-006",
+        "priority": "Should Have",
+        "requirement": "System shall provide real-time operational dashboard for administrators"
+      }
+    ]
+  },
+  "appeals_system": {
+    "overview": "Comprehensive appeals system providing candidates with transparent access to evidence and clear escalation paths.",
+    "evidence_viewer": {
+      "description": "Self-service tool allowing candidates to review all evidence from their exam session",
+      "capabilities": [
+        {
+          "feature": "Session Recording Playback",
+          "description": "Full video playback of exam session with timeline navigation",
+          "requirements": [
+            "Video player with standard controls (play, pause, seek)",
+            "Playback speed adjustment (0.5x to 2x)",
+            "Timestamp display synchronized with exam timeline",
+            "Quality adjustment for bandwidth constraints"
+          ]
+        },
+        {
+          "feature": "Flag Timeline",
+          "description": "Visual timeline showing all flags with direct navigation",
+          "requirements": [
+            "Chronological flag display on visual timeline",
+            "Click-to-jump navigation to flagged moments",
+            "Flag severity color coding",
+            "Filter options by flag type and severity"
+          ]
+        },
+        {
+          "feature": "Flag Detail View",
+          "description": "Detailed information for each flag",
+          "requirements": [
+            "Full flag explanation in plain language",
+            "Confidence score display",
+            "Linked evidence (video clip, screenshot, audio)",
+            "Information about what triggered the flag"
+          ]
+        },
+        {
+          "feature": "Screen Recording",
+          "description": "Playback of candidate screen during exam",
+          "requirements": [
+            "Synchronized playback with webcam video",
+            "Separate view or picture-in-picture option",
+            "Highlight of flagged screen events"
+          ]
+        },
+        {
+          "feature": "Audio Playback",
+          "description": "Access to audio recording from exam session",
+          "requirements": [
+            "Isolated audio track playback",
+            "Visualization of audio events (speech detected, etc.)",
+            "Navigation to flagged audio moments"
+          ]
+        },
+        {
+          "feature": "Answer Review",
+          "description": "Review of submitted answers with timing information",
+          "requirements": [
+            "Question-by-question answer display",
+            "Time spent per question",
+            "Navigation history showing question access patterns",
+            "Correlation with video timeline"
+          ]
+        }
+      ],
+      "access_controls": {
+        "candidate_access": [
+          "View own session recording for 30 days after exam",
+          "Review all flags and explanations",
+          "Download evidence package for personal records",
+          "Submit appeal with evidence references"
+        ],
+        "administrator_access": [
+          "View any session within organization",
+          "Compare multiple sessions",
+          "Generate evidence reports",
+          "Add internal notes and annotations"
+        ]
+      }
+    },
+    "escalation_paths": {
+      "description": "Structured escalation process ensuring appropriate review at each level",
+      "levels": [
+        {
+          "level": 1,
+          "name": "Initial Review",
+          "reviewer": "Automated triage + designated exam administrator",
+          "scope": "Review of submitted appeal and evidence",
+          "authority": [
+            "Dismiss appeal if clearly unfounded",
+            "Overturn flag if evidence clearly supports candidate",
+            "Escalate to Level 2 if determination uncertain"
+          ],
+          "sla": "Decision within 5 business days"
+        },
+        {
+          "level": 2,
+          "name": "Secondary Review",
+          "reviewer": "Senior integrity officer or appeals committee",
+          "scope": "Fresh review of all evidence plus Level 1 findings",
+          "authority": [
+            "Final decision on standard appeals",
+            "Recommend policy exceptions",
+            "Escalate to Level 3 for complex cases"
+          ],
+          "sla": "Decision within 10 business days of escalation"
+        },
+        {
+          "level": 3,
+          "name": "Executive Review",
+          "reviewer": "Executive committee or independent panel",
+          "scope": "Review of precedent-setting cases or unresolved disputes",
+          "authority": [
+            "Final binding decision",
+            "Policy interpretation guidance",
+            "Remediation directives"
+          ],
+          "sla": "Decision within 20 business days of escalation"
+        }
+      ],
+      "escalation_triggers": {
+        "automatic_escalation": [
+          "Level 1 reviewer requests additional input",
+          "Case involves potential systemic issues",
+          "Candidate explicitly requests escalation after Level 1 decision"
+        ],
+        "criteria_for_level_3": [
+          "Case may set precedent affecting future decisions",
+          "Significant dispute over evidence interpretation",
+          "Potential liability concerns",
+          "Media or regulatory attention"
+        ]
+      }
+    },
+    "appeal_outcomes": {
+      "possible_outcomes": [
+        {
+          "outcome": "Appeal Upheld - Result Stands",
+          "description": "Evidence review confirms integrity concern",
+          "candidate_options": ["Escalate to next level if available", "Accept decision"]
+        },
+        {
+          "outcome": "Appeal Granted - Result Restored",
+          "description": "Evidence review does not support integrity concern",
+          "actions": ["Remove flags from record", "Restore original result", "Update candidate notification"]
+        },
+        {
+          "outcome": "Appeal Granted - Retake Offered",
+          "description": "Technical or procedural issues affected exam",
+          "actions": ["Schedule retake at no cost", "Preserve attempt count"]
+        },
+        {
+          "outcome": "Appeal Partially Granted",
+          "description": "Some flags overturned, others upheld",
+          "actions": ["Update record with specific flag resolutions", "Recalculate any impact on result"]
+        }
+      ]
+    },
+    "appeals_requirements": [
+      {
+        "id": "APP-001",
+        "priority": "Must Have",
+        "requirement": "Candidates shall have access to view complete session recordings and all evidence through self-service portal"
+      },
+      {
+        "id": "APP-002",
+        "priority": "Must Have",
+        "requirement": "Evidence viewer shall provide synchronized playback of video, audio, and screen recording"
+      },
+      {
+        "id": "APP-003",
+        "priority": "Must Have",
+        "requirement": "System shall provide minimum three-level escalation path for appeals"
+      },
+      {
+        "id": "APP-004",
+        "priority": "Must Have",
+        "requirement": "Each escalation level shall have defined SLAs for decision timeline"
+      },
+      {
+        "id": "APP-005",
+        "priority": "Must Have",
+        "requirement": "Appeal decisions shall include detailed written rationale with specific evidence citations"
+      },
+      {
+        "id": "APP-006",
+        "priority": "Should Have",
+        "requirement": "System shall track appeal outcomes to identify patterns in flag accuracy"
+      },
+      {
+        "id": "APP-007",
+        "priority": "Must Have",
+        "requirement": "Evidence shall be preserved for minimum 1 year to support appeals process"
+      }
+    ]
+  },
+  "metrics_and_analytics": {
+    "overview": "Key performance indicators for measuring platform effectiveness, candidate experience, and operational efficiency.",
+    "primary_metrics": {
+      "completion_success_rate": {
+        "metric_id": "MET-001",
+        "name": "Completion Success Rate",
+        "description": "Percentage of scheduled exams that are successfully completed without technical issues",
+        "formula": "(Completed Exams / Scheduled Exams) × 100",
+        "target": "≥ 98%",
+        "measurement_frequency": "Daily",
+        "segments": [
+          {
+            "segment": "By Platform",
+            "breakdown": ["Windows Lockdown Browser", "macOS Lockdown Browser", "Web (non-lockdown)"]
+          },
+          {
+            "segment": "By Browser Version",
+            "breakdown": "Individual version tracking"
+          },
+          {
+            "segment": "By Geographic Region",
+            "breakdown": "Country and timezone analysis"
+          },
+          {
+            "segment": "By Organization",
+            "breakdown": "Per-customer analysis"
+          }
+        ],
+        "alerting": {
+          "warning_threshold": "< 97%",
+          "critical_threshold": "< 95%",
+          "alert_channels": ["Dashboard", "Email", "Slack/Teams integration"]
+        }
+      },
+      "tech_dropout_rate": {
+        "metric_id": "MET-002",
+        "name": "Drop-off Due to Technical Issues",
+        "description": "Percentage of exam attempts abandoned due to technical problems",
+        "formula": "(Tech-Related Abandonments / Total Exam Starts) × 100",
+        "target": "≤ 2%",
+        "measurement_frequency": "Daily",
+        "technical_issue_categories": [
+          {
+            "category": "Identity Verification Failure",
+            "description": "Unable to complete ID verification due to technical issues"
+          },
+          {
+            "category": "Lockdown Browser Crash",
+            "description": "Browser crash during exam without recovery"
+          },
+          {
+            "category": "Connectivity Loss",
+            "description": "Internet disconnection preventing exam continuation"
+          },
+          {
+            "category": "Hardware Compatibility",
+            "description": "Camera, microphone, or system compatibility issues"
+          },
+          {
+            "category": "Session Upload Failure",
+            "description": "Unable to upload session data after exam"
+          }
+        ],
+        "analysis_dimensions": [
+          "By issue category",
+          "By operating system and version",
+          "By browser version",
+          "By device specifications",
+          "By network type"
+        ]
+      },
+      "appeal_overturn_rate": {
+        "metric_id": "MET-003",
+        "name": "Appeal Overturn Rate",
+        "description": "Percentage of appeals resulting in decision reversal in favor of candidate",
+        "formula": "(Overturned Appeals / Total Decided Appeals) × 100",
+        "target": "≤ 10%",
+        "measurement_frequency": "Weekly",
+        "interpretation": {
+          "high_rate_indicates": [
+            "Potential issues with AI flag accuracy",
+            "Overly sensitive detection thresholds",
+            "Need for model retraining",
+            "Policy clarity issues"
+          ],
+          "low_rate_indicates": [
+            "Accurate AI detection",
+            "Appropriate threshold calibration",
+            "Potentially barriers to successful appeals (monitor carefully)"
+          ]
+        },
+        "breakdown": [
+          {
+            "dimension": "By Flag Type",
+            "purpose": "Identify which flag categories have highest overturn rates"
+          },
+          {
+            "dimension": "By Escalation Level",
+            "purpose": "Track where decisions are being reversed"
+          },
+          {
+            "dimension": "By Appeal Reason",
+            "purpose": "Understand common grounds for successful appeals"
+          }
+        ]
+      }
+    },
+    "secondary_metrics": {
+      "operational_metrics": [
+        {
+          "metric_id": "MET-004",
+          "name": "Average Check-in Time",
+          "description": "Time from exam access to completion of identity verification",
+          "target": "≤ 3 minutes",
+          "measurement_frequency": "Daily"
+        },
+        {
+          "metric_id": "MET-005",
+          "name": "System Availability",
+          "description": "Platform uptime during scheduled exam windows",
+          "target": "≥ 99.9%",
+          "measurement_frequency": "Real-time"
+        },
+        {
+          "metric_id": "MET-006",
+          "name": "Video Upload Success Rate",
+          "description": "Percentage of sessions with complete video upload",
+          "target": "≥ 99.5%",
+          "measurement_frequency": "Daily"
+        }
+      ],
+      "integrity_metrics": [
+        {
+          "metric_id": "MET-007",
+          "name": "Flag Rate",
+          "description": "Percentage of sessions receiving one or more flags",
+          "target": "Monitor for trends (no specific target)",
+          "measurement_frequency": "Weekly"
+        },
+        {
+          "metric_id": "MET-008",
+          "name": "False Positive Rate",
+          "description": "Percentage of flags overturned upon review",
+          "target": "≤ 15%",
+          "measurement_frequency": "Weekly"
+        },
+        {
+          "metric_id": "MET-009",
+          "name": "Identity Verification Pass Rate",
+          "description": "Percentage of candidates passing automated identity verification",
+          "target": "≥ 95%",
+          "measurement_frequency": "Daily"
+        }
+      ],
+      "experience_metrics": [
+        {
+          "metric_id": "MET-010",
+          "name": "Candidate Satisfaction Score",
+          "description": "Post-exam survey satisfaction rating",
+          "target": "≥ 4.0/5.0",
+          "measurement_frequency": "Weekly aggregate"
+        },
+        {
+          "metric_id": "MET-011",
+          "name": "Support Ticket Volume",
+          "description": "Number of support requests per 1000 exams",
+          "target": "≤ 30 tickets/1000 exams",
+          "measurement_frequency": "Weekly"
+        },
+        {
+          "metric_id": "MET-012",
+          "name": "First Contact Resolution Rate",
+          "description": "Percentage of support issues resolved on first contact",
+          "target": "≥ 80%",
+          "measurement_frequency": "Weekly"
+        }
+      ],
+      "bias_monitoring_metrics": [
+        {
+          "metric_id": "MET-013",
+          "name": "Flag Rate Disparity",
+          "description": "Difference in flag rates across demographic groups",
+          "target": "< 5% disparity between groups",
+          "measurement_frequency": "Monthly"
+        },
+        {
+          "metric_id": "MET-014",
+          "name": "Verification Failure Disparity",
+          "description": "Difference in ID verification failure rates across groups",
+          "target": "< 3% disparity between groups",
+          "measurement_frequency": "Monthly"
+        }
+      ]
+    },
+    "reporting": {
+      "dashboards": [
+        {
+          "name": "Executive Dashboard",
+          "audience": "C-level and senior management",
+          "content": ["KPI summary", "Trend analysis", "Risk indicators", "Comparison to targets"],
+          "refresh_frequency": "Daily"
+        },
+        {
+          "name": "Operations Dashboard",
+          "audience": "Operations and support teams",
+          "content": ["Real-time exam status", "Active issues", "Support queue", "System health"],
+          "refresh_frequency": "Real-time"
+        },
+        {
+          "name": "Integrity Dashboard",
+          "audience": "Integrity and compliance teams",
+          "content": ["Flag analytics", "Appeal status", "Bias metrics", "Audit log highlights"],
+          "refresh_frequency": "Daily"
+        },
+        {
+          "name": "Customer Dashboard",
+          "audience": "Organization administrators",
+          "content": ["Organization-specific metrics", "Exam completion rates", "Candidate feedback", "Usage trends"],
+          "refresh_frequency": "Daily"
+        }
+      ],
+      "scheduled_reports": [
+        {
+          "report": "Weekly Operations Summary",
+          "recipients": "Operations team",
+          "content": "All primary and secondary metrics with week-over-week comparison"
+        },
+        {
+          "report": "Monthly Executive Report",
+          "recipients": "Executive team and board",
+          "content": "Strategic metrics, trend analysis, notable incidents, outlook"
+        },
+        {
+          "report": "Quarterly Bias Audit",
+          "recipients": "Compliance team, executive sponsor",
+          "content": "Comprehensive bias analysis with recommendations"
+        }
+      ]
+    },
+    "metrics_requirements": [
+      {
+        "id": "MTR-001",
+        "priority": "Must Have",
+        "requirement": "System shall track and report completion success rate in real-time"
+      },
+      {
+        "id": "MTR-002",
+        "priority": "Must Have",
+        "requirement": "System shall categorize and track all technical issues causing exam abandonment"
+      },
+      {
+        "id": "MTR-003",
+        "priority": "Must Have",
+        "requirement": "System shall calculate and report appeal overturn rates by flag type"
+      },
+      {
+        "id": "MTR-004",
+        "priority": "Should Have",
+        "requirement": "System shall provide customizable dashboards for different user roles"
+      },
+      {
+        "id": "MTR-005",
+        "priority": "Must Have",
+        "requirement": "System shall generate automated alerts when metrics breach defined thresholds"
+      },
+      {
+        "id": "MTR-006",
+        "priority": "Should Have",
+        "requirement": "System shall support export of metrics data for external analysis"
+      }
+    ]
+  },
+  "hris_integration": {
+    "overview": "Seamless integration with Human Resource Information Systems enabling automated candidate management, identity verification, and result synchronization.",
+    "integration_architecture": {
+      "approach": "API-first with pre-built connectors for major HRIS platforms",
+      "protocols_supported": ["REST API", "SOAP", "SFTP", "OAuth 2.0"],
+      "data_flow": "Bi-directional synchronization with configurable frequency"
+    },
+    "supported_platforms": {
+      "tier_1_native_connectors": [
+        {
+          "platform": "Workday",
+          "integration_type": "Native connector via Workday API",
+          "features": ["Employee data sync", "Photo sync", "Org hierarchy", "Result writeback"]
+        },
+        {
+          "platform": "SAP SuccessFactors",
+          "integration_type": "Native connector via OData API",
+          "features": ["Employee data sync", "Learning Management integration", "Result sync"]
+        },
+        {
+          "platform": "Oracle HCM Cloud",
+          "integration_type": "Native connector via REST API",
+          "features": ["Employee data sync", "Certification tracking", "Result sync"]
+        },
+        {
+          "platform": "ADP Workforce Now",
+          "integration_type": "Native connector via ADP Marketplace",
+          "features": ["Employee data sync", "Basic result writeback"]
+        }
+      ],
+      "tier_2_standard_connectors": [
+        {
+          "platform": "BambooHR",
+          "integration_type": "API connector"
+        },
+        {
+          "platform": "UKG (Ultimate Kronos Group)",
+          "integration_type": "API connector"
+        },
+        {
+          "platform": "Ceridian Dayforce",
+          "integration_type": "API connector"
+        },
+        {
+          "platform": "Paylocity",
+          "integration_type": "API connector"
+        }
+      ],
+      "custom_integration": {
+        "description": "Flexible integration framework for unsupported HRIS platforms",
+        "options": [
+          "Custom API development",
+          "SFTP file-based integration",
+          "Webhook-based event integration",
+          "Manual import/export tools"
+        ]
+      }
+    },
+    "data_synchronization": {
+      "employee_data_import": {
+        "description": "Import candidate information from HRIS",
+        "fields": [
+          {
+            "field": "Employee ID",
+            "required": true,
+            "purpose": "Unique identifier for matching"
+          },
+          {
+            "field": "Full Name",
+            "required": true,
+            "purpose": "Display and verification"
+          },
+          {
+            "field": "Email Address",
+            "required": true,
+            "purpose": "Communication and account matching"
+          },
+          {
+            "field": "Department",
+            "required": false,
+            "purpose": "Reporting segmentation"
+          },
+          {
+            "field": "Job Title",
+            "required": false,
+            "purpose": "Exam assignment rules"
+          },
+          {
+            "field": "Manager",
+            "required": false,
+            "purpose": "Result notification routing"
+          },
+          {
+            "field": "Location",
+            "required": false,
+            "purpose": "Timezone and compliance mapping"
+          },
+          {
+            "field": "Employment Status",
+            "required": true,
+            "purpose": "Eligibility verification"
+          },
+          {
+            "field": "Hire Date",
+            "required": false,
+            "purpose": "Onboarding exam triggers"
+          },
+          {
+            "field": "Photo",
+            "required": false,
+            "purpose": "Identity verification enhancement"
+          }
+        ],
+        "sync_options": [
+          {
+            "type": "Scheduled Sync",
+            "description": "Automated sync at configurable intervals",
+            "options": ["Hourly", "Daily", "Weekly"]
+          },
+          {
+            "type": "Real-time Sync",
+            "description": "Webhook-triggered sync on employee changes",
+            "events": ["New hire", "Termination", "Department change", "Profile update"]
+          },
+          {
+            "type": "Manual Sync",
+            "description": "On-demand sync triggered by administrator"
+          }
+        ]
+      },
+      "result_export": {
+        "description": "Export exam results back to HRIS",
+        "data_elements": [
+          {
+            "element": "Exam Name",
+            "description": "Identifier of completed exam"
+          },
+          {
+            "element": "Completion Date",
+            "description": "Date and time of exam completion"
+          },
+          {
+            "element": "Result",
+            "description": "Pass/Fail status or score"
+          },
+          {
+            "element": "Certification Earned",
+            "description": "Certification name if applicable"
+          },
+          {
+            "element": "Expiration Date",
+            "description": "Certification expiration if applicable"
+          },
+          {
+            "element": "Attempt Number",
+            "description": "Which attempt this result represents"
+          }
+        ],
+        "export_triggers": [
+          "Immediate on result finalization",
+          "Batch export at scheduled intervals",
+          "Manual export by administrator"
+        ]
+      }
+    },
+    "use_cases": {
+      "onboarding_automation": {
+        "description": "Automatic exam assignment for new employees",
+        "workflow": [
+          "New hire record created in HRIS",
+          "Employee data synced to ProctorGuard",
+          "Applicable exams assigned based on role/department rules",
+          "Candidate notification sent with exam instructions",
+          "Results synced back to HRIS upon completion"
+        ]
+      },
+      "compliance_tracking": {
+        "description": "Automated tracking of required certifications",
+        "workflow": [
+          "Required certifications defined per role in ProctorGuard",
+          "Employee role changes synced from HRIS",
+          "Missing certifications identified and exams assigned",
+          "Expiring certifications trigger renewal exam assignment",
+          "Compliance status available in both systems"
+        ]
+      },
+      "identity_verification_enhancement": {
+        "description": "Use HRIS data to strengthen identity verification",
+        "capabilities": [
+          "Match candidate photo against HRIS profile photo",
+          "Verify employee ID entered matches HRIS record",
+          "Confirm employment status is active",
+          "Flag if candidate info doesn't match HRIS data"
+        ]
+      }
+    },
+    "security_and_compliance": {
+      "data_protection": [
+        "Encrypted data transmission (TLS 1.3)",
+        "Encrypted storage of synced data",
+        "Field-level encryption for sensitive data",
+        "Access logging for all HRIS data operations"
+      ],
+      "access_controls": [
+        "Service account with minimal necessary permissions",
+        "IP allowlisting for API connections",
+        "OAuth 2.0 with token refresh",
+        "Credential rotation requirements"
+      ],
+      "compliance_considerations": [
+        "Data minimization - only sync required fields",
+        "Configurable data retention aligned with HRIS policies",
+        "Audit trail of all data synchronization",
+        "Data deletion cascade when employee removed"
+      ]
+    },
+    "hris_requirements": [
+      {
+        "id": "HRIS-001",
+        "priority": "Must Have",
+        "requirement": "System shall provide native integration with at least Workday, SAP SuccessFactors, and Oracle HCM"
+      },
+      {
+        "id": "HRIS-002",
+        "priority": "Must Have",
+        "requirement": "System shall support bi-directional data sync including employee import and result export"
+      },
+      {
+        "id": "HRIS-003",
+        "priority": "Must Have",
+        "requirement": "System shall support real-time sync via webhooks for employee status changes"
+      },
+      {
+        "id": "HRIS-004",
+        "priority": "Should Have",
+        "requirement": "System shall use HRIS profile photos for identity verification cross-reference"
+      },
+      {
+        "id": "HRIS-005",
+        "priority": "Must Have",
+        "requirement": "System shall provide API documentation and tools for custom HRIS integration"
+      },
+      {
+        "id": "HRIS-006",
+        "priority": "Must Have",
+        "requirement": "All HRIS data transfers shall be encrypted and logged"
+      },
+      {
+        "id": "HRIS-007",
+        "priority": "Should Have",
+        "requirement": "System shall support automated exam assignment based on HRIS employee attributes"
+      }
+    ]
+  },
+  "requirements_summary": {
+    "total_requirements": 67,
+    "by_priority": {
+      "must_have": 52,
+      "should_have": 15
+    },
+    "by_category": {
+      "identity_verification": 7,
+      "environment_control": 8,
+      "ai_explainability": 7,
+      "legal_compliance": 8,
+      "accessibility": 7,
+      "operations": 6,
+      "appeals_system": 7,
+      "metrics": 6,
+      "hris_integration": 7,
+      "threat_detection": 4
+    }
+  },
+  "appendices": {
+    "glossary": [
+      {
+        "term": "Anti-spoofing",
+        "definition": "Techniques to detect and prevent presentation attacks using fake biometric samples"
+      },
+      {
+        "term": "Behavioral Biometrics",
+        "definition": "Analysis of user behavior patterns such as typing rhythm and mouse movements for identification"
+      },
+      {
+        "term": "HRIS",
+        "definition": "Human Resource Information System - software for managing employee data and HR processes"
+      },
+      {
+        "term": "Liveness Detection",
+        "definition": "Verification that a biometric sample comes from a live person present at the time of capture"
+      },
+      {
+        "term": "Lockdown Browser",
+        "definition": "Specialized browser that restricts access to other applications and system functions during exams"
+      },
+      {
+        "term": "Presentation Attack",
+        "definition": "Attempt to deceive biometric systems using artifacts such as photos, videos, or masks"
+      },
+      {
+        "term": "WCAG",
+        "definition": "Web Content Accessibility Guidelines - international standard for web accessibility"
+      },
+      {
+        "term": "XAI",
+        "definition": "Explainable AI - artificial intelligence systems whose decisions can be understood by humans"
+      }
+    ],
+    "revision_history": [
+      {
+        "version": "1.0",
+        "date": "2026-01-28",
+        "author": "Product Team",
+        "changes": "Initial document creation"
+      }
+    ]
+  }
+}
