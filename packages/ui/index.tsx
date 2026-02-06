@@ -7,6 +7,9 @@ export * from './components/dialog';
 export * from './components/table';
 export * from './components/checkbox';
 export * from './components/badge';
+export * from './components/select';
+export * from './components/textarea';
+export * from './components/radio-group';
 
 export * from './components/sign-in-form';
 export * from './components/sign-up-form';
