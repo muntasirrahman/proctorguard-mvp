@@ -94,6 +94,10 @@ export async function createQuestion(bankId: string, data: QuestionData) {
     throw new Error('Question text is required');
   }
 
+  if (data.points < 1) {
+    throw new Error('Points must be at least 1');
+  }
+
   // Validate type-specific data
   if (data.type === 'multiple_choice') {
     if (!data.options || !data.correctAnswer) {
@@ -136,6 +140,7 @@ export async function createQuestion(bankId: string, data: QuestionData) {
   await prisma.auditLog.create({
     data: {
       userId: session.user.id,
+      organizationId: bank.organizationId,
       action: 'created',
       resource: 'question',
       resourceId: question.id,
@@ -175,8 +180,44 @@ export async function updateQuestion(questionId: string, data: Partial<QuestionD
     }
   }
 
+  // Validate points if provided
+  if (data.points !== undefined && data.points < 1) {
+    throw new Error('Points must be at least 1');
+  }
+
+  // Validate type-specific fields if being updated
+  if (data.type === 'multiple_choice' || (data.options !== undefined && existing.type === 'multiple_choice')) {
+    if (data.options) {
+      const requiredOptions = ['A', 'B', 'C', 'D', 'E'];
+      for (const opt of requiredOptions) {
+        if (!data.options[opt as keyof typeof data.options]?.trim()) {
+          throw new Error(`Option ${opt} is required for multiple choice questions`);
+        }
+      }
+    }
+    if (data.correctAnswer !== undefined && typeof data.correctAnswer === 'string') {
+      if (!['A', 'B', 'C', 'D', 'E'].includes(data.correctAnswer)) {
+        throw new Error('Correct answer must be A, B, C, D, or E');
+      }
+    }
+  } else if (data.type === 'true_false' || (data.correctAnswer !== undefined && typeof data.correctAnswer === 'boolean' && existing.type === 'true_false')) {
+    if (data.correctAnswer !== undefined && typeof data.correctAnswer !== 'boolean') {
+      throw new Error('True/false questions require a boolean correct answer');
+    }
+  }
+
   // Build update data
-  const updateData: any = {};
+  const updateData: Partial<{
+    text: string;
+    difficulty: Difficulty;
+    points: number;
+    timeLimit: number | null;
+    explanation: string | null;
+    status: QuestionStatus;
+    tags: string[];
+    options: { A: string; B: string; C: string; D: string; E: string };
+    correctAnswer: Prisma.InputJsonValue;
+  }> = {};
   if (data.text !== undefined) updateData.text = data.text.trim();
   if (data.difficulty !== undefined) updateData.difficulty = data.difficulty;
   if (data.points !== undefined) updateData.points = data.points;
@@ -196,6 +237,7 @@ export async function updateQuestion(questionId: string, data: Partial<QuestionD
   await prisma.auditLog.create({
     data: {
       userId: session.user.id,
+      organizationId: existing.questionBank.organizationId,
       action: 'updated',
       resource: 'question',
       resourceId: question.id,
@@ -236,6 +278,7 @@ export async function deleteQuestion(questionId: string) {
   await prisma.auditLog.create({
     data: {
       userId: session.user.id,
+      organizationId: existing.questionBank.organizationId,
       action: 'deleted',
       resource: 'question',
       resourceId: questionId,
