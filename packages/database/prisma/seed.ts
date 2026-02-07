@@ -1,5 +1,5 @@
 import { PrismaClient, Role, QuestionBankStatus, QuestionStatus, Difficulty } from '@prisma/client';
-import { hash } from 'bcryptjs';
+import { auth } from '@proctorguard/auth';
 
 const prisma = new PrismaClient();
 
@@ -38,80 +38,48 @@ async function main() {
   });
   console.log('✅ Created departments');
 
-  // Create demo users
-  const hashedPassword = await hash('password123', 10);
+  // Create demo users using Better Auth's signUp handler directly
+  const demoUsers = [
+    { email: 'admin@acme.com', name: 'Super Admin', password: 'password123' },
+    { email: 'orgadmin@acme.com', name: 'Organization Admin', password: 'password123' },
+    { email: 'author@acme.com', name: 'Exam Author', password: 'password123' },
+    { email: 'coordinator@acme.com', name: 'Exam Coordinator', password: 'password123' },
+    { email: 'enrollment@acme.com', name: 'Enrollment Manager', password: 'password123' },
+    { email: 'reviewer@acme.com', name: 'Proctor Reviewer', password: 'password123' },
+    { email: 'candidate@acme.com', name: 'John Candidate', password: 'password123' },
+  ];
 
-  const superAdmin = await prisma.user.upsert({
-    where: { email: 'admin@acme.com' },
-    update: {},
-    create: {
-      email: 'admin@acme.com',
-      name: 'Super Admin',
-      emailVerified: new Date(),
-    },
-  });
+  // Create users through Better Auth's signUp handler
+  const createdUsers: Record<string, any> = {};
+  for (const userData of demoUsers) {
+    // Use Better Auth's signUp handler to create user and account with proper password hashing
+    const result = await auth.api.signUpEmail({
+      body: {
+        email: userData.email,
+        password: userData.password,
+        name: userData.name,
+      },
+    });
 
-  const orgAdmin = await prisma.user.upsert({
-    where: { email: 'orgadmin@acme.com' },
-    update: {},
-    create: {
-      email: 'orgadmin@acme.com',
-      name: 'Organization Admin',
-      emailVerified: new Date(),
-    },
-  });
+    if (result && result.user) {
+      // Update emailVerified to true
+      await prisma.user.update({
+        where: { id: result.user.id },
+        data: { emailVerified: true },
+      });
+      createdUsers[userData.email] = result.user;
+    }
+  }
 
-  const examAuthor = await prisma.user.upsert({
-    where: { email: 'author@acme.com' },
-    update: {},
-    create: {
-      email: 'author@acme.com',
-      name: 'Exam Author',
-      emailVerified: new Date(),
-    },
-  });
+  const superAdmin = createdUsers['admin@acme.com'];
+  const orgAdmin = createdUsers['orgadmin@acme.com'];
+  const examAuthor = createdUsers['author@acme.com'];
+  const coordinator = createdUsers['coordinator@acme.com'];
+  const enrollmentMgr = createdUsers['enrollment@acme.com'];
+  const reviewer = createdUsers['reviewer@acme.com'];
+  const candidate = createdUsers['candidate@acme.com'];
 
-  const coordinator = await prisma.user.upsert({
-    where: { email: 'coordinator@acme.com' },
-    update: {},
-    create: {
-      email: 'coordinator@acme.com',
-      name: 'Exam Coordinator',
-      emailVerified: new Date(),
-    },
-  });
-
-  const enrollmentMgr = await prisma.user.upsert({
-    where: { email: 'enrollment@acme.com' },
-    update: {},
-    create: {
-      email: 'enrollment@acme.com',
-      name: 'Enrollment Manager',
-      emailVerified: new Date(),
-    },
-  });
-
-  const reviewer = await prisma.user.upsert({
-    where: { email: 'reviewer@acme.com' },
-    update: {},
-    create: {
-      email: 'reviewer@acme.com',
-      name: 'Proctor Reviewer',
-      emailVerified: new Date(),
-    },
-  });
-
-  const candidate = await prisma.user.upsert({
-    where: { email: 'candidate@acme.com' },
-    update: {},
-    create: {
-      email: 'candidate@acme.com',
-      name: 'John Candidate',
-      emailVerified: new Date(),
-    },
-  });
-
-  console.log('✅ Created demo users');
+  console.log('✅ Created demo users with Better Auth');
 
   // Assign roles
   await prisma.userRole.createMany({
