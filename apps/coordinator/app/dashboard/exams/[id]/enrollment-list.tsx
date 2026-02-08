@@ -42,7 +42,7 @@ import { UserPlus, Users, Check, X, Trash2, MoreVertical } from 'lucide-react';
 
 interface EnrollmentListProps {
   examId: string;
-  enrollments: Array<{
+  initialEnrollments: Array<{
     id: string;
     status: EnrollmentStatus;
     invitedAt: Date;
@@ -53,7 +53,7 @@ interface EnrollmentListProps {
   }>;
 }
 
-export function EnrollmentList({ examId, enrollments }: EnrollmentListProps) {
+export function EnrollmentList({ examId, initialEnrollments }: EnrollmentListProps) {
   const router = useRouter();
 
   // Dialog states
@@ -316,7 +316,7 @@ export function EnrollmentList({ examId, enrollments }: EnrollmentListProps) {
           </div>
         )}
 
-        {enrollments.length === 0 ? (
+        {initialEnrollments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
@@ -336,7 +336,7 @@ export function EnrollmentList({ examId, enrollments }: EnrollmentListProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {enrollments.map((enrollment) => (
+                {initialEnrollments.map((enrollment) => (
                   <TableRow key={enrollment.id}>
                     <TableCell className="font-medium">
                       {enrollment.candidate.name || 'N/A'}
@@ -391,7 +391,7 @@ export function EnrollmentList({ examId, enrollments }: EnrollmentListProps) {
         )}
 
         <div className="mt-4 text-sm text-muted-foreground">
-          Total: {enrollments.length} candidate(s)
+          Total: {initialEnrollments.length} candidate(s)
         </div>
       </CardContent>
     </Card>

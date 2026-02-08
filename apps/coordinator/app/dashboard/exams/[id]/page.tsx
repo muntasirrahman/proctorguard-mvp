@@ -144,7 +144,7 @@ export default async function ExamDetailPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      <EnrollmentList examId={id} enrollments={enrollments} />
+      <EnrollmentList examId={id} initialEnrollments={enrollments} />
     </div>
   );
 }
