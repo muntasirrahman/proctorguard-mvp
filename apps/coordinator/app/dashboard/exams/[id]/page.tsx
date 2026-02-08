@@ -54,7 +54,7 @@ export default async function ExamDetailPage({ params }: PageProps) {
           <Link href={`/dashboard/exams/${id}/edit`}>
             <Button variant="outline">Edit</Button>
           </Link>
-          <ExamActions examId={id} status={exam.status} />
+          <ExamActions examId={id} currentStatus={exam.status} />
         </div>
       </div>
 

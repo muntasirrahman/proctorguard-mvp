@@ -23,10 +23,10 @@ import { MoreVertical, Calendar, Play, CheckCircle, Trash2 } from 'lucide-react'
 
 interface ExamActionsProps {
   examId: string;
-  status: ExamStatus;
+  currentStatus: ExamStatus;
 }
 
-export function ExamActions({ examId, status }: ExamActionsProps) {
+export function ExamActions({ examId, currentStatus }: ExamActionsProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -90,9 +90,9 @@ export function ExamActions({ examId, status }: ExamActionsProps) {
 
   // Don't show menu if no actions are available
   if (
-    status !== ExamStatus.DRAFT &&
-    status !== ExamStatus.SCHEDULED &&
-    status !== ExamStatus.ACTIVE
+    currentStatus !== ExamStatus.DRAFT &&
+    currentStatus !== ExamStatus.SCHEDULED &&
+    currentStatus !== ExamStatus.ACTIVE
   ) {
     return null;
   }
@@ -113,7 +113,7 @@ export function ExamActions({ examId, status }: ExamActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {status === ExamStatus.DRAFT && (
+          {currentStatus === ExamStatus.DRAFT && (
             <>
               <DropdownMenuItem onClick={handleSchedule} disabled={isLoading}>
                 <Calendar className="mr-2 h-4 w-4" />
@@ -130,7 +130,7 @@ export function ExamActions({ examId, status }: ExamActionsProps) {
             </>
           )}
 
-          {status === ExamStatus.SCHEDULED && (
+          {currentStatus === ExamStatus.SCHEDULED && (
             <>
               <DropdownMenuItem onClick={handleActivate} disabled={isLoading}>
                 <Play className="mr-2 h-4 w-4" />
@@ -147,7 +147,7 @@ export function ExamActions({ examId, status }: ExamActionsProps) {
             </>
           )}
 
-          {status === ExamStatus.ACTIVE && (
+          {currentStatus === ExamStatus.ACTIVE && (
             <DropdownMenuItem onClick={handleComplete} disabled={isLoading}>
               <CheckCircle className="mr-2 h-4 w-4" />
               Complete Exam
