@@ -1,11 +1,27 @@
 'use server';
 
 import { auth } from '@proctorguard/auth';
-import { prisma, ExamStatus } from '@proctorguard/database';
+import { prisma, ExamStatus, Role } from '@proctorguard/database';
 import { requirePermission, Permission } from '@proctorguard/permissions';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+
+// Input validation function
+function validateExamInput(data: CreateExamInput) {
+  if (data.duration <= 0) {
+    throw new Error('Duration must be positive');
+  }
+  if (data.passingScore < 0 || data.passingScore > 100) {
+    throw new Error('Passing score must be between 0 and 100');
+  }
+  if (data.allowedAttempts <= 0) {
+    throw new Error('Allowed attempts must be positive');
+  }
+  if (data.scheduledStart && data.scheduledEnd && data.scheduledStart >= data.scheduledEnd) {
+    throw new Error('Scheduled end must be after scheduled start');
+  }
+}
 
 async function getSessionAndOrg() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -17,7 +33,7 @@ async function getSessionAndOrg() {
   const userRole = await prisma.userRole.findFirst({
     where: {
       userId: session.user.id,
-      role: 'EXAM_COORDINATOR',
+      role: Role.EXAM_COORDINATOR,
     },
     include: {
       organization: true,
@@ -175,6 +191,35 @@ export async function createExam(data: CreateExamInput) {
     Permission.CREATE_EXAM
   );
 
+  // Validate input
+  validateExamInput(data);
+
+  // Verify questionBankId exists, belongs to org, and is APPROVED
+  const questionBank = await prisma.questionBank.findUnique({
+    where: { id: data.questionBankId },
+    select: { organizationId: true, status: true },
+  });
+
+  if (!questionBank || questionBank.organizationId !== orgId) {
+    throw new Error('Question bank not found or does not belong to your organization');
+  }
+
+  if (questionBank.status !== 'APPROVED') {
+    throw new Error('Question bank must be approved before creating an exam');
+  }
+
+  // Verify departmentId exists and belongs to org (if provided)
+  if (data.departmentId) {
+    const department = await prisma.department.findUnique({
+      where: { id: data.departmentId },
+      select: { organizationId: true },
+    });
+
+    if (!department || department.organizationId !== orgId) {
+      throw new Error('Department not found or does not belong to your organization');
+    }
+  }
+
   const exam = await prisma.exam.create({
     data: {
       title: data.title,
@@ -197,6 +242,18 @@ export async function createExam(data: CreateExamInput) {
     },
   });
 
+  // Log to audit trail
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: 'EXAM_CREATED',
+      resource: 'EXAM',
+      resourceId: exam.id,
+      details: { title: exam.title, status: exam.status },
+      timestamp: new Date(),
+    },
+  });
+
   revalidatePath('/dashboard');
   redirect(`/dashboard/exams/${exam.id}`);
 }
@@ -211,6 +268,9 @@ export async function updateExam(data: UpdateExamInput) {
     Permission.EDIT_EXAM
   );
 
+  // Validate input
+  validateExamInput(data);
+
   // Verify exam belongs to coordinator's org
   const existing = await prisma.exam.findUnique({
     where: { id: data.id },
@@ -224,6 +284,32 @@ export async function updateExam(data: UpdateExamInput) {
   // Only allow editing if exam is DRAFT or SCHEDULED
   if (existing.status !== ExamStatus.DRAFT && existing.status !== ExamStatus.SCHEDULED) {
     throw new Error('Cannot edit exam in current status');
+  }
+
+  // Verify questionBankId exists, belongs to org, and is APPROVED
+  const questionBank = await prisma.questionBank.findUnique({
+    where: { id: data.questionBankId },
+    select: { organizationId: true, status: true },
+  });
+
+  if (!questionBank || questionBank.organizationId !== orgId) {
+    throw new Error('Question bank not found or does not belong to your organization');
+  }
+
+  if (questionBank.status !== 'APPROVED') {
+    throw new Error('Question bank must be approved before updating an exam');
+  }
+
+  // Verify departmentId exists and belongs to org (if provided)
+  if (data.departmentId) {
+    const department = await prisma.department.findUnique({
+      where: { id: data.departmentId },
+      select: { organizationId: true },
+    });
+
+    if (!department || department.organizationId !== orgId) {
+      throw new Error('Department not found or does not belong to your organization');
+    }
   }
 
   const exam = await prisma.exam.update({
@@ -242,6 +328,18 @@ export async function updateExam(data: UpdateExamInput) {
     },
   });
 
+  // Log to audit trail
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: 'EXAM_UPDATED',
+      resource: 'EXAM',
+      resourceId: exam.id,
+      details: { title: exam.title, status: exam.status },
+      timestamp: new Date(),
+    },
+  });
+
   revalidatePath('/dashboard/exams');
   revalidatePath(`/dashboard/exams/${exam.id}`);
   return exam;
@@ -257,7 +355,7 @@ export async function updateExamStatus(examId: string, status: ExamStatus) {
 
   const exam = await prisma.exam.findUnique({
     where: { id: examId },
-    select: { organizationId: true },
+    select: { organizationId: true, title: true },
   });
 
   if (!exam || exam.organizationId !== orgId) {
@@ -267,6 +365,18 @@ export async function updateExamStatus(examId: string, status: ExamStatus) {
   await prisma.exam.update({
     where: { id: examId },
     data: { status },
+  });
+
+  // Log to audit trail
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: 'EXAM_STATUS_CHANGED',
+      resource: 'EXAM',
+      resourceId: examId,
+      details: { title: exam.title, newStatus: status },
+      timestamp: new Date(),
+    },
   });
 
   revalidatePath('/dashboard/exams');
@@ -283,7 +393,7 @@ export async function deleteExam(examId: string) {
 
   const exam = await prisma.exam.findUnique({
     where: { id: examId },
-    select: { organizationId: true, status: true },
+    select: { organizationId: true, status: true, title: true },
   });
 
   if (!exam || exam.organizationId !== orgId) {
@@ -297,6 +407,18 @@ export async function deleteExam(examId: string) {
 
   await prisma.exam.delete({
     where: { id: examId },
+  });
+
+  // Log to audit trail
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: 'EXAM_DELETED',
+      resource: 'EXAM',
+      resourceId: examId,
+      details: { title: exam.title, status: exam.status },
+      timestamp: new Date(),
+    },
   });
 
   revalidatePath('/dashboard/exams');
