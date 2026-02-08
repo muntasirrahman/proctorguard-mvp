@@ -132,7 +132,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ],
 
   [Role.EXAM_COORDINATOR]: [
-    // Exam scheduling and configuration - cannot create questions
+    // Exam scheduling, configuration, and enrollment management - cannot create questions
     Permission.VIEW_QUESTION_BANK, // Can view/select but not create
     Permission.CREATE_EXAM,
     Permission.EDIT_EXAM,
@@ -140,6 +140,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.SCHEDULE_EXAM,
     Permission.VIEW_EXAM_CONFIG,
     Permission.VIEW_ENROLLMENTS,
+    Permission.INVITE_CANDIDATE,
+    Permission.APPROVE_ENROLLMENT,
+    Permission.REJECT_ENROLLMENT,
     // CANNOT: Create questions, review sessions, or see detailed results
   ],
 
