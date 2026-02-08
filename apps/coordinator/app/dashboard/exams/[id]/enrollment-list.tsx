@@ -37,6 +37,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@proctorguard/ui';
 import { UserPlus, Users, Check, X, Trash2, MoreVertical } from 'lucide-react';
 
@@ -59,6 +67,7 @@ export function EnrollmentList({ examId, initialEnrollments }: EnrollmentListPro
   // Dialog states
   const [singleInviteOpen, setSingleInviteOpen] = useState(false);
   const [bulkInviteOpen, setBulkInviteOpen] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
 
   // Form states
   const [singleEmail, setSingleEmail] = useState('');
@@ -68,6 +77,7 @@ export function EnrollmentList({ examId, initialEnrollments }: EnrollmentListPro
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [enrollmentToRemove, setEnrollmentToRemove] = useState<string | null>(null);
 
   // Helper function to get status badge variant
   const getStatusBadge = (status: EnrollmentStatus) => {
@@ -186,18 +196,24 @@ export function EnrollmentList({ examId, initialEnrollments }: EnrollmentListPro
   };
 
   // Remove enrollment handler
-  const handleRemove = async (enrollmentId: string) => {
-    if (!confirm('Are you sure you want to remove this enrollment? This action cannot be undone.')) {
-      return;
-    }
+  const handleRemove = (enrollmentId: string) => {
+    setEnrollmentToRemove(enrollmentId);
+    setShowRemoveDialog(true);
+  };
+
+  // Confirm remove enrollment
+  const confirmRemove = async () => {
+    if (!enrollmentToRemove) return;
 
     setError(null);
     setSuccess(null);
     setLoading(true);
 
     try {
-      await removeEnrollment(enrollmentId);
+      await removeEnrollment(enrollmentToRemove);
       setSuccess('Enrollment removed successfully');
+      setShowRemoveDialog(false);
+      setEnrollmentToRemove(null);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove enrollment');
@@ -207,10 +223,11 @@ export function EnrollmentList({ examId, initialEnrollments }: EnrollmentListPro
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Enrollments</CardTitle>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Enrollments</CardTitle>
           <div className="flex gap-2">
             <Dialog open={singleInviteOpen} onOpenChange={setSingleInviteOpen}>
               <DialogTrigger asChild>
@@ -395,5 +412,27 @@ export function EnrollmentList({ examId, initialEnrollments }: EnrollmentListPro
         </div>
       </CardContent>
     </Card>
+
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently remove the enrollment.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemove}
+              disabled={loading}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {loading ? 'Removing...' : 'Remove Enrollment'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
