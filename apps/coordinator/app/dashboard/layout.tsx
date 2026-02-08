@@ -4,9 +4,7 @@ import { redirect } from 'next/navigation';
 import { DashboardShell } from '@proctorguard/ui';
 
 const navItems = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Exams', href: '/dashboard/exams' },
-  { label: 'Enrollments', href: '/dashboard/enrollments' },
+  { label: 'Exams', href: '/dashboard', icon: 'Calendar' },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
