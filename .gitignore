@@ -58,3 +58,6 @@ Thumbs.db
 
 # Prisma
 prisma/migrations/
+
+# Git worktrees
+.worktrees/
