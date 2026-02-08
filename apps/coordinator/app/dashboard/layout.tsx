@@ -2,11 +2,11 @@ import { auth } from '@proctorguard/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DashboardShell } from '@proctorguard/ui';
+import { Calendar } from 'lucide-react';
 
 const navItems = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Exams', href: '/dashboard/exams' },
-  { label: 'Enrollments', href: '/dashboard/enrollments' },
+  { label: 'Exams', href: '/dashboard', icon: Calendar },
+  // Add more items as needed in future phases
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
