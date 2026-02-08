@@ -13,11 +13,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # Development
 npm run dev                  # Run all 5 apps in parallel
-npm run dev:candidate        # Run candidate app only (port 3001)
-npm run dev:admin            # Run admin app only (port 3002)
-npm run dev:author           # Run author app only (port 3003)
-npm run dev:coordinator      # Run coordinator app only (port 3004)
-npm run dev:reviewer         # Run reviewer app only (port 3005)
+npm run dev:candidate        # Run candidate app only (port 4000)
+npm run dev:admin            # Run admin app only (port 4001)
+npm run dev:author           # Run author app only (port 4002)
+npm run dev:coordinator      # Run coordinator app only (port 4003)
+npm run dev:reviewer         # Run reviewer app only (port 4004)
 
 # Build & Lint
 npm run build                # Build all apps with Turborepo
@@ -43,11 +43,11 @@ npm run lint                 # ESLint
 ```
 proctor-exam-mvp/
 ├── apps/                    # 5 separate Next.js applications
-│   ├── candidate/          # Port 3001 - CANDIDATE role
-│   ├── admin/              # Port 3002 - ORG_ADMIN role
-│   ├── author/             # Port 3003 - EXAM_AUTHOR role
-│   ├── coordinator/        # Port 3004 - EXAM_COORDINATOR role
-│   └── reviewer/           # Port 3005 - PROCTOR_REVIEWER role
+│   ├── candidate/          # Port 4000 - CANDIDATE role
+│   ├── admin/              # Port 4001 - ORG_ADMIN role
+│   ├── author/             # Port 4002 - EXAM_AUTHOR role
+│   ├── coordinator/        # Port 4003 - EXAM_COORDINATOR role
+│   └── reviewer/           # Port 4004 - PROCTOR_REVIEWER role
 │
 └── packages/               # Shared code
     ├── database/          # @proctorguard/database - Prisma client
@@ -249,12 +249,12 @@ import { Button, Card } from '@proctorguard/ui';
 | Email | Password | Role | App |
 |-------|----------|------|-----|
 | admin@acme.com | password123 | SUPER_ADMIN | Any |
-| orgadmin@acme.com | password123 | ORG_ADMIN | Admin (3002) |
-| author@acme.com | password123 | EXAM_AUTHOR | Author (3003) |
-| coordinator@acme.com | password123 | EXAM_COORDINATOR | Coordinator (3004) |
-| enrollment@acme.com | password123 | ENROLLMENT_MANAGER | Admin (3002) |
-| reviewer@acme.com | password123 | PROCTOR_REVIEWER | Reviewer (3005) |
-| candidate@acme.com | password123 | CANDIDATE | Candidate (3001) |
+| orgadmin@acme.com | password123 | ORG_ADMIN | Admin (4001) |
+| author@acme.com | password123 | EXAM_AUTHOR | Author (4002) |
+| coordinator@acme.com | password123 | EXAM_COORDINATOR | Coordinator (4003) |
+| enrollment@acme.com | password123 | ENROLLMENT_MANAGER | Admin (4001) |
+| reviewer@acme.com | password123 | PROCTOR_REVIEWER | Reviewer (4004) |
+| candidate@acme.com | password123 | CANDIDATE | Candidate (4000) |
 
 Organization: "ACME Corporation" (ID will vary)
 

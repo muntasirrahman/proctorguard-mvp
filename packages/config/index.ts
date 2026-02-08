@@ -8,28 +8,28 @@ export const APP_CONFIG = {
   apps: {
     candidate: {
       name: 'Candidate Portal',
-      port: 3001,
-      url: process.env.CANDIDATE_URL || 'http://localhost:3001',
+      port: 4000,
+      url: process.env.CANDIDATE_URL || 'http://localhost:4000',
     },
     admin: {
       name: 'Admin Dashboard',
-      port: 3002,
-      url: process.env.ADMIN_URL || 'http://localhost:3002',
+      port: 4001,
+      url: process.env.ADMIN_URL || 'http://localhost:4001',
     },
     author: {
       name: 'Question Author',
-      port: 3003,
-      url: process.env.AUTHOR_URL || 'http://localhost:3003',
+      port: 4002,
+      url: process.env.AUTHOR_URL || 'http://localhost:4002',
     },
     coordinator: {
       name: 'Exam Coordinator',
-      port: 3004,
-      url: process.env.COORDINATOR_URL || 'http://localhost:3004',
+      port: 4003,
+      url: process.env.COORDINATOR_URL || 'http://localhost:4003',
     },
     reviewer: {
       name: 'Session Reviewer',
-      port: 3005,
-      url: process.env.REVIEWER_URL || 'http://localhost:3005',
+      port: 4004,
+      url: process.env.REVIEWER_URL || 'http://localhost:4004',
     },
   },
 

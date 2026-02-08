@@ -26,11 +26,11 @@ npm run dev
 ```
 
 **Applications will be available at:**
-- 🟦 Candidate Portal: http://localhost:3001
-- 🟦 Admin Dashboard: http://localhost:3002
-- 🟩 Question Author: http://localhost:3003
-- 🟪 Exam Coordinator: http://localhost:3004
-- 🟧 Session Reviewer: http://localhost:3005
+- 🟦 Candidate Portal: http://localhost:4000
+- 🟦 Admin Dashboard: http://localhost:4001
+- 🟩 Question Author: http://localhost:4002
+- 🟪 Exam Coordinator: http://localhost:4003
+- 🟧 Session Reviewer: http://localhost:4004
 
 ---
 
@@ -317,7 +317,7 @@ Set in Vercel:
 npm run dev
 
 # Open candidate portal
-open http://localhost:3001
+open http://localhost:4000
 
 # Open database editor
 npm run db:studio
@@ -329,7 +329,7 @@ npm run db:studio
 
 **Port in use:**
 ```bash
-lsof -ti:3001 | xargs kill -9
+lsof -ti:4000 | xargs kill -9
 ```
 
 **Database connection failed:**

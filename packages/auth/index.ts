@@ -11,11 +11,11 @@ export const auth = betterAuth({
     requireEmailVerification: false, // Set to true in production
   },
   trustedOrigins: [
-    'http://localhost:3001', // Candidate app
-    'http://localhost:3002', // Admin app
-    'http://localhost:3003', // Author app
-    'http://localhost:3004', // Coordinator app
-    'http://localhost:3005', // Reviewer app
+    'http://localhost:4000', // Candidate app
+    'http://localhost:4001', // Admin app
+    'http://localhost:4002', // Author app
+    'http://localhost:4003', // Coordinator app
+    'http://localhost:4004', // Reviewer app
   ],
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
