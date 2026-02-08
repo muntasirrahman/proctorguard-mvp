@@ -10,6 +10,7 @@ export * from './components/badge';
 export * from './components/select';
 export * from './components/textarea';
 export * from './components/radio-group';
+export * from './components/switch';
 
 export * from './components/sign-in-form';
 export * from './components/sign-up-form';
