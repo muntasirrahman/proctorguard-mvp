@@ -79,10 +79,11 @@ export function ExamActions({ examId, currentStatus }: ExamActionsProps) {
     setError(null);
     try {
       await deleteExam(examId);
-      // deleteExam redirects to /dashboard/exams, so we don't need router.refresh()
+      // deleteExam redirects to /dashboard/exams on success
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete exam');
       console.error('Failed to delete exam:', err);
+    } finally {
       setIsLoading(false);
       setShowDeleteDialog(false);
     }
@@ -131,20 +132,10 @@ export function ExamActions({ examId, currentStatus }: ExamActionsProps) {
           )}
 
           {currentStatus === ExamStatus.SCHEDULED && (
-            <>
-              <DropdownMenuItem onClick={handleActivate} disabled={isLoading}>
-                <Play className="mr-2 h-4 w-4" />
-                Activate Exam
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setShowDeleteDialog(true)}
-                disabled={isLoading}
-                className="text-red-600 focus:text-red-600"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Exam
-              </DropdownMenuItem>
-            </>
+            <DropdownMenuItem onClick={handleActivate} disabled={isLoading}>
+              <Play className="mr-2 h-4 w-4" />
+              Activate Exam
+            </DropdownMenuItem>
           )}
 
           {currentStatus === ExamStatus.ACTIVE && (
