@@ -59,8 +59,18 @@ function formatDuration(minutes: number): string {
   return mins > 0 ? `${hours}h ${mins}m` : `${hours} hour${hours > 1 ? 's' : ''}`;
 }
 
-function getTimeRemaining(session: { startedAt: Date | null }, exam: { duration: number; scheduledEnd: Date | null }): string {
-  if (!session.startedAt || !exam.scheduledEnd) return 'Unknown';
+/**
+ * Calculates minutes remaining for an in-progress exam session.
+ * Returns -1 if expired or invalid inputs.
+ *
+ * TIMEZONE: All Date objects from database are assumed to be in the same timezone
+ * as the client. Both startedAt and scheduledEnd are compared against local time.
+ */
+function getMinutesRemaining(
+  session: { startedAt: Date | null },
+  exam: { duration: number; scheduledEnd: Date | null }
+): number {
+  if (!session.startedAt || !exam.scheduledEnd) return -1;
 
   const now = new Date();
   const start = new Date(session.startedAt);
@@ -68,9 +78,18 @@ function getTimeRemaining(session: { startedAt: Date | null }, exam: { duration:
   const durationEnd = new Date(start.getTime() + exam.duration * 60 * 1000);
   const expiresAt = windowEnd < durationEnd ? windowEnd : durationEnd;
 
-  const remaining = Math.floor((expiresAt.getTime() - now.getTime()) / 1000 / 60);
+  const remainingMs = expiresAt.getTime() - now.getTime();
+  return Math.floor(remainingMs / 1000 / 60);
+}
 
-  if (remaining <= 0) return 'Expired';
+function getTimeRemaining(
+  session: { startedAt: Date | null },
+  exam: { duration: number; scheduledEnd: Date | null }
+): string {
+  const remaining = getMinutesRemaining(session, exam);
+
+  if (remaining < 0) return 'Expired';
+  if (remaining === 0) return 'Less than 1 minute remaining';
   if (remaining < 60) return `${remaining} minutes remaining`;
 
   const hours = Math.floor(remaining / 60);
@@ -250,8 +269,9 @@ export function EnrolledExams({ exams }: Props) {
           const examState = determineExamState(enrollment);
           const isLoading = loading === enrollment.id;
           const latestSession = enrollment.sessions[0];
+          const minutesRemaining = latestSession ? getMinutesRemaining(latestSession, enrollment.exam) : -1;
           const timeRemaining = latestSession ? getTimeRemaining(latestSession, enrollment.exam) : '';
-          const isLowTime = timeRemaining.includes('minutes') && parseInt(timeRemaining) < 10;
+          const isLowTime = minutesRemaining > 0 && minutesRemaining < 10;
 
           return (
             <Card key={enrollment.id} className="border-l-4 border-green-500">
