@@ -163,6 +163,7 @@ export function EnrolledExams({ exams }: Props) {
         alert(result.error); // We'll use toast in next step
       }
     } catch (error) {
+      console.error('Failed to start exam:', error);
       alert('Failed to start exam. Please try again.');
     } finally {
       setLoading(null);
@@ -179,6 +180,7 @@ export function EnrolledExams({ exams }: Props) {
         alert(result.error);
       }
     } catch (error) {
+      console.error('Failed to resume session:', error);
       alert('Failed to resume session. Please try again.');
     } finally {
       setLoading(null);
@@ -251,6 +253,8 @@ export function EnrolledExams({ exams }: Props) {
       {exams.map((enrollment) => {
         const status = getExamStatus(enrollment.exam);
         const canStart = canStartExam(enrollment.exam, enrollment.attemptsUsed);
+        const examState = determineExamState(enrollment);
+        const isLoading = loading === enrollment.id;
 
         return (
           <Card key={enrollment.id}>
@@ -333,11 +337,18 @@ export function EnrolledExams({ exams }: Props) {
 
               <div className="pt-2">
                 <Button
-                  disabled={!canStart}
+                  disabled={!canStart || isLoading}
                   className="w-full"
                   variant={canStart ? 'default' : 'outline'}
+                  onClick={() => {
+                    if (examState === 'IN_PROGRESS') {
+                      handleResume(enrollment.id);
+                    } else {
+                      handleStart(enrollment.id);
+                    }
+                  }}
                 >
-                  {canStart ? 'Start Exam' : 'Not Available'}
+                  {isLoading ? 'Loading...' : examState === 'IN_PROGRESS' ? 'Resume Exam' : canStart ? 'Start Exam' : 'Not Available'}
                 </Button>
                 {!canStart && enrollment.attemptsUsed >= enrollment.exam.allowedAttempts && (
                   <p className="text-xs text-muted-foreground text-center mt-2">
