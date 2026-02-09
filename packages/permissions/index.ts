@@ -49,6 +49,11 @@ export enum Permission {
   RESOLVE_FLAG = 'resolve_flag',
   VIEW_RECORDINGS = 'view_recordings',
 
+  // Candidate Enrollment Actions
+  VIEW_PENDING_INVITATIONS = 'view_pending_invitations',
+  ACCEPT_ENROLLMENT = 'accept_enrollment',
+  DECLINE_ENROLLMENT = 'decline_enrollment',
+
   // Appeals
   SUBMIT_APPEAL = 'submit_appeal',
   REVIEW_APPEAL = 'review_appeal',
@@ -189,6 +194,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 
   [Role.CANDIDATE]: [
     // Exam taker permissions
+    Permission.VIEW_PENDING_INVITATIONS,
+    Permission.ACCEPT_ENROLLMENT,
+    Permission.DECLINE_ENROLLMENT,
     Permission.TAKE_EXAM,
     Permission.VIEW_OWN_RESULTS,
     Permission.SUBMIT_APPEAL,
