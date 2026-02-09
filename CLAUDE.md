@@ -12,12 +12,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Development
-npm run dev                  # Run all 5 apps in parallel
+npm run dev                  # Run both apps in parallel (candidate + staff)
 npm run dev:candidate        # Run candidate app only (port 4000)
-npm run dev:admin            # Run admin app only (port 4001)
-npm run dev:author           # Run author app only (port 4002)
-npm run dev:coordinator      # Run coordinator app only (port 4003)
-npm run dev:reviewer         # Run reviewer app only (port 4004)
+npm run dev:staff            # Run staff portal (port 4001)
+
+# Legacy apps (deprecated - use staff portal instead)
+npm run dev:admin            # Run admin app only (port 4001) - DEPRECATED
+npm run dev:author           # Run author app only (port 4002) - DEPRECATED
+npm run dev:coordinator      # Run coordinator app only (port 4003) - DEPRECATED
+npm run dev:reviewer         # Run reviewer app only (port 4004) - DEPRECATED
 
 # Build & Lint
 npm run build                # Build all apps with Turborepo
@@ -42,12 +45,16 @@ npm run lint                 # ESLint
 
 ```
 proctor-exam-mvp/
-├── apps/                    # 5 separate Next.js applications
+├── apps/                    # 2 Next.js applications
 │   ├── candidate/          # Port 4000 - CANDIDATE role
-│   ├── admin/              # Port 4001 - ORG_ADMIN role
-│   ├── author/             # Port 4002 - EXAM_AUTHOR role
-│   ├── coordinator/        # Port 4003 - EXAM_COORDINATOR role
-│   └── reviewer/           # Port 4004 - PROCTOR_REVIEWER role
+│   ├── staff/              # Port 4001 - All staff roles (NEW)
+│   │                       # Unified portal for: ORG_ADMIN, EXAM_AUTHOR,
+│   │                       # EXAM_COORDINATOR, PROCTOR_REVIEWER
+│   │
+│   ├── admin/              # DEPRECATED - migrated to staff portal
+│   ├── author/             # DEPRECATED - migrated to staff portal
+│   ├── coordinator/        # DEPRECATED - migrated to staff portal
+│   └── reviewer/           # DEPRECATED - migrated to staff portal
 │
 └── packages/               # Shared code
     ├── database/          # @proctorguard/database - Prisma client
@@ -56,6 +63,8 @@ proctor-exam-mvp/
     ├── ui/                # @proctorguard/ui - shadcn/ui components
     └── config/            # @proctorguard/config - Shared types
 ```
+
+**Architecture Change (2026-02-09):** Consolidated 4 staff apps into unified Staff Portal with dynamic permission-based navigation. Multi-role users now access all their features in one place. See `docs/plans/2026-02-09-staff-portal-consolidation-design.md`.
 
 ### Critical Design Patterns
 
