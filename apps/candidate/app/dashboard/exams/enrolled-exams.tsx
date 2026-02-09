@@ -9,6 +9,9 @@ import {
   Button,
   Badge,
 } from '@proctorguard/ui';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { startExam, resumeSession } from '../../actions/sessions';
 
 type EnrolledExam = {
   id: string;
@@ -144,6 +147,44 @@ function groupExamsByState(exams: EnrolledExam[]) {
 }
 
 export function EnrolledExams({ exams }: Props) {
+  const router = useRouter();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  // Group exams by state
+  const { inProgress, available, upcoming, completed } = groupExamsByState(exams);
+
+  const handleStart = async (enrollmentId: string) => {
+    setLoading(enrollmentId);
+    try {
+      const result = await startExam(enrollmentId);
+      if (result.success) {
+        router.push(`/dashboard/exams/${enrollmentId}/take?session=${result.sessionId}`);
+      } else {
+        alert(result.error); // We'll use toast in next step
+      }
+    } catch (error) {
+      alert('Failed to start exam. Please try again.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleResume = async (enrollmentId: string) => {
+    setLoading(enrollmentId);
+    try {
+      const result = await resumeSession(enrollmentId);
+      if (result.success) {
+        router.push(`/dashboard/exams/${enrollmentId}/take?session=${result.sessionId}`);
+      } else {
+        alert(result.error);
+      }
+    } catch (error) {
+      alert('Failed to resume session. Please try again.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const getExamStatus = (exam: EnrolledExam['exam']) => {
     const now = new Date();
 
