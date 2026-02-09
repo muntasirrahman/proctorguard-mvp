@@ -16,12 +16,6 @@ npm run dev                  # Run both apps in parallel (candidate + staff)
 npm run dev:candidate        # Run candidate app only (port 4000)
 npm run dev:staff            # Run staff portal (port 4001)
 
-# Legacy apps (deprecated - use staff portal instead)
-npm run dev:admin            # Run admin app only (port 4001) - DEPRECATED
-npm run dev:author           # Run author app only (port 4002) - DEPRECATED
-npm run dev:coordinator      # Run coordinator app only (port 4003) - DEPRECATED
-npm run dev:reviewer         # Run reviewer app only (port 4004) - DEPRECATED
-
 # Build & Lint
 npm run build                # Build all apps with Turborepo
 npm run lint                 # Lint all apps

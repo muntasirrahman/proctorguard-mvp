@@ -47,6 +47,11 @@ async function main() {
     { email: 'enrollment@acme.com', name: 'Enrollment Manager', password: 'password123' },
     { email: 'reviewer@acme.com', name: 'Proctor Reviewer', password: 'password123' },
     { email: 'candidate@acme.com', name: 'John Candidate', password: 'password123' },
+    // Multi-role test users
+    { email: 'author-coordinator@acme.com', name: 'Author & Coordinator', password: 'password123' },
+    { email: 'coordinator-reviewer@acme.com', name: 'Coordinator & Reviewer', password: 'password123' },
+    { email: 'admin-author@acme.com', name: 'Admin & Author', password: 'password123' },
+    { email: 'multirole@acme.com', name: 'Multi-Role User', password: 'password123' },
   ];
 
   // Create users through Better Auth's signUp handler
@@ -78,12 +83,17 @@ async function main() {
   const enrollmentMgr = createdUsers['enrollment@acme.com'];
   const reviewer = createdUsers['reviewer@acme.com'];
   const candidate = createdUsers['candidate@acme.com'];
+  const authorCoordinator = createdUsers['author-coordinator@acme.com'];
+  const coordinatorReviewer = createdUsers['coordinator-reviewer@acme.com'];
+  const adminAuthor = createdUsers['admin-author@acme.com'];
+  const multiRole = createdUsers['multirole@acme.com'];
 
   console.log('✅ Created demo users with Better Auth');
 
   // Assign roles
   await prisma.userRole.createMany({
     data: [
+      // Single-role users
       { userId: superAdmin.id, role: Role.SUPER_ADMIN, organizationId: org.id },
       { userId: orgAdmin.id, role: Role.ORG_ADMIN, organizationId: org.id },
       { userId: examAuthor.id, role: Role.EXAM_AUTHOR, organizationId: org.id, departmentId: itDept.id },
@@ -91,10 +101,21 @@ async function main() {
       { userId: enrollmentMgr.id, role: Role.ENROLLMENT_MANAGER, organizationId: org.id, departmentId: hrDept.id },
       { userId: reviewer.id, role: Role.PROCTOR_REVIEWER, organizationId: org.id },
       { userId: candidate.id, role: Role.CANDIDATE, organizationId: org.id },
+      // Multi-role users
+      { userId: authorCoordinator.id, role: Role.EXAM_AUTHOR, organizationId: org.id, departmentId: itDept.id },
+      { userId: authorCoordinator.id, role: Role.EXAM_COORDINATOR, organizationId: org.id, departmentId: itDept.id },
+      { userId: coordinatorReviewer.id, role: Role.EXAM_COORDINATOR, organizationId: org.id, departmentId: itDept.id },
+      { userId: coordinatorReviewer.id, role: Role.PROCTOR_REVIEWER, organizationId: org.id },
+      { userId: adminAuthor.id, role: Role.ORG_ADMIN, organizationId: org.id },
+      { userId: adminAuthor.id, role: Role.EXAM_AUTHOR, organizationId: org.id, departmentId: itDept.id },
+      { userId: multiRole.id, role: Role.ORG_ADMIN, organizationId: org.id },
+      { userId: multiRole.id, role: Role.EXAM_AUTHOR, organizationId: org.id, departmentId: itDept.id },
+      { userId: multiRole.id, role: Role.EXAM_COORDINATOR, organizationId: org.id, departmentId: itDept.id },
+      { userId: multiRole.id, role: Role.PROCTOR_REVIEWER, organizationId: org.id },
     ],
     skipDuplicates: true,
   });
-  console.log('✅ Assigned roles');
+  console.log('✅ Assigned roles (including multi-role users)');
 
   // Add organization members
   await prisma.organizationMember.createMany({
@@ -106,6 +127,10 @@ async function main() {
       { userId: enrollmentMgr.id, organizationId: org.id },
       { userId: reviewer.id, organizationId: org.id },
       { userId: candidate.id, organizationId: org.id },
+      { userId: authorCoordinator.id, organizationId: org.id },
+      { userId: coordinatorReviewer.id, organizationId: org.id },
+      { userId: adminAuthor.id, organizationId: org.id },
+      { userId: multiRole.id, organizationId: org.id },
     ],
     skipDuplicates: true,
   });
@@ -183,7 +208,8 @@ async function main() {
   console.log('✅ Created sample questions');
 
   console.log('🎉 Database seeded successfully!');
-  console.log('\n📧 Demo login credentials:');
+  console.log('\n📧 Demo login credentials (all passwords: password123):');
+  console.log('\n--- Single-Role Users ---');
   console.log('Super Admin: admin@acme.com');
   console.log('Org Admin: orgadmin@acme.com');
   console.log('Exam Author: author@acme.com');
@@ -191,6 +217,11 @@ async function main() {
   console.log('Enrollment Manager: enrollment@acme.com');
   console.log('Reviewer: reviewer@acme.com');
   console.log('Candidate: candidate@acme.com');
+  console.log('\n--- Multi-Role Test Users ---');
+  console.log('Author + Coordinator: author-coordinator@acme.com');
+  console.log('Coordinator + Reviewer: coordinator-reviewer@acme.com');
+  console.log('Admin + Author: admin-author@acme.com');
+  console.log('All Staff Roles: multirole@acme.com');
   console.log('\n(Use Better Auth for authentication in the apps)\n');
 }
 
