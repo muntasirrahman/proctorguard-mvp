@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "concurrently -n candidate,admin,author,coordinator,reviewer -c cyan,blue,green,magenta,yellow \"npm run dev --workspace=@proctorguard/candidate\" \"npm run dev --workspace=@proctorguard/admin\" \"npm run dev --workspace=@proctorguard/author\" \"npm run dev --workspace=@proctorguard/coordinator\" \"npm run dev --workspace=@proctorguard/reviewer\"",
     "dev:candidate": "cd apps/candidate && npm run dev",
+    "dev:staff": "cd apps/staff && npm run dev",
     "dev:admin": "cd apps/admin && npm run dev",
     "dev:author": "cd apps/author && npm run dev",
     "dev:coordinator": "cd apps/coordinator && npm run dev",
