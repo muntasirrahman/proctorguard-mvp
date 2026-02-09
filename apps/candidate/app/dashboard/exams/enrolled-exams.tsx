@@ -3,6 +3,10 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { startExam, resumeSession } from '../../actions/sessions';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@proctorguard/ui';
+import { Button } from '@proctorguard/ui';
+import { Badge } from '@proctorguard/ui';
+import { Clock, Calendar, CheckCircle2, AlertCircle } from 'lucide-react';
 
 type EnrolledExam = {
   id: string;
@@ -36,6 +40,43 @@ type Props = {
 };
 
 type ExamState = 'IN_PROGRESS' | 'AVAILABLE' | 'UPCOMING' | 'COMPLETED';
+
+function formatDate(date: Date | null): string {
+  if (!date) return 'Not scheduled';
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes} minutes`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours} hour${hours > 1 ? 's' : ''}`;
+}
+
+function getTimeRemaining(session: { startedAt: Date | null }, exam: { duration: number; scheduledEnd: Date | null }): string {
+  if (!session.startedAt || !exam.scheduledEnd) return 'Unknown';
+
+  const now = new Date();
+  const start = new Date(session.startedAt);
+  const windowEnd = new Date(exam.scheduledEnd);
+  const durationEnd = new Date(start.getTime() + exam.duration * 60 * 1000);
+  const expiresAt = windowEnd < durationEnd ? windowEnd : durationEnd;
+
+  const remaining = Math.floor((expiresAt.getTime() - now.getTime()) / 1000 / 60);
+
+  if (remaining <= 0) return 'Expired';
+  if (remaining < 60) return `${remaining} minutes remaining`;
+
+  const hours = Math.floor(remaining / 60);
+  const mins = remaining % 60;
+  return `${hours}h ${mins}m remaining`;
+}
 
 function determineExamState(enrollment: EnrolledExam): ExamState {
   const { exam, sessions, attemptsUsed } = enrollment;
@@ -205,38 +246,174 @@ export function EnrolledExams({ exams }: Props) {
     <div className="space-y-8">
       {/* In Progress Section */}
       <Section title="Active Session" count={inProgress.length}>
-        {inProgress.map((enrollment) => (
-          <div key={enrollment.id} className="p-4 border-l-4 border-green-500 bg-white rounded-lg shadow">
-            <p>Placeholder for IN_PROGRESS card - Task 6</p>
-          </div>
-        ))}
+        {inProgress.map((enrollment) => {
+          const examState = determineExamState(enrollment);
+          const isLoading = loading === enrollment.id;
+          const latestSession = enrollment.sessions[0];
+          const timeRemaining = latestSession ? getTimeRemaining(latestSession, enrollment.exam) : '';
+          const isLowTime = timeRemaining.includes('minutes') && parseInt(timeRemaining) < 10;
+
+          return (
+            <Card key={enrollment.id} className="border-l-4 border-green-500">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{enrollment.exam.title}</span>
+                  <Badge variant="default" className="bg-green-600">In Progress</Badge>
+                </CardTitle>
+                <CardDescription>{enrollment.exam.organization.name}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4" />
+                  <span className={isLowTime ? 'text-red-600 font-semibold' : ''}>
+                    {timeRemaining}
+                  </span>
+                </div>
+                {latestSession?.startedAt && (
+                  <div className="text-sm text-gray-600">
+                    Started {formatDate(latestSession.startedAt)}
+                  </div>
+                )}
+                <div className="text-sm text-gray-600">
+                  Attempt {enrollment.attemptsUsed} of {enrollment.exam.allowedAttempts}
+                </div>
+                <Button
+                  onClick={() => handleResume(enrollment.id)}
+                  disabled={isLoading}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  {isLoading ? 'Loading...' : 'Resume Exam'}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </Section>
 
       {/* Available Section */}
       <Section title="Available Now" count={available.length}>
-        {available.map((enrollment) => (
-          <div key={enrollment.id} className="p-4 border-l-4 border-blue-500 bg-white rounded-lg shadow">
-            <p>Placeholder for AVAILABLE card - Task 6</p>
-          </div>
-        ))}
+        {available.map((enrollment) => {
+          const examState = determineExamState(enrollment);
+          const isLoading = loading === enrollment.id;
+
+          return (
+            <Card key={enrollment.id} className="border-l-4 border-blue-500">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{enrollment.exam.title}</span>
+                  <Badge variant="default" className="bg-blue-600">Available</Badge>
+                </CardTitle>
+                <CardDescription>{enrollment.exam.organization.name}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {enrollment.exam.description && (
+                  <p className="text-sm text-gray-700">{enrollment.exam.description}</p>
+                )}
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Clock className="h-4 w-4" />
+                  <span>Duration: {formatDuration(enrollment.exam.duration)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="h-4 w-4" />
+                  <span>Available until {formatDate(enrollment.exam.scheduledEnd)}</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  Attempts: {enrollment.attemptsUsed} / {enrollment.exam.allowedAttempts} used
+                </div>
+                <Button
+                  onClick={() => handleStart(enrollment.id)}
+                  disabled={isLoading}
+                  className="w-full"
+                >
+                  {isLoading ? 'Loading...' : 'Start Exam'}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </Section>
 
       {/* Upcoming Section */}
       <Section title="Upcoming" count={upcoming.length}>
         {upcoming.map((enrollment) => (
-          <div key={enrollment.id} className="p-4 border-l-4 border-gray-300 bg-white rounded-lg shadow">
-            <p>Placeholder for UPCOMING card - Task 6</p>
-          </div>
+          <Card key={enrollment.id} className="border-l-4 border-gray-300">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>{enrollment.exam.title}</span>
+                <Badge variant="secondary">Upcoming</Badge>
+              </CardTitle>
+              <CardDescription>{enrollment.exam.organization.name}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {enrollment.exam.description && (
+                <p className="text-sm text-gray-700">{enrollment.exam.description}</p>
+              )}
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Calendar className="h-4 w-4" />
+                <span>Starts {formatDate(enrollment.exam.scheduledStart)}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Clock className="h-4 w-4" />
+                <span>Duration: {formatDuration(enrollment.exam.duration)}</span>
+              </div>
+              <Button disabled variant="outline" className="w-full">
+                Opens {formatDate(enrollment.exam.scheduledStart)}
+              </Button>
+            </CardContent>
+          </Card>
         ))}
       </Section>
 
       {/* Completed Section */}
       <Section title="Past Exams" count={completed.length}>
-        {completed.map((enrollment) => (
-          <div key={enrollment.id} className="p-4 bg-white rounded-lg shadow">
-            <p>Placeholder for COMPLETED card - Task 6</p>
-          </div>
-        ))}
+        {completed.map((enrollment) => {
+          const latestSession = enrollment.sessions[0];
+          const isPassed = latestSession?.passed === true;
+          const isFailed = latestSession?.passed === false;
+
+          return (
+            <Card key={enrollment.id}>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{enrollment.exam.title}</span>
+                  {isPassed && (
+                    <Badge variant="default" className="bg-green-600">
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      Passed
+                    </Badge>
+                  )}
+                  {isFailed && (
+                    <Badge variant="destructive">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Not Passed
+                    </Badge>
+                  )}
+                  {!isPassed && !isFailed && (
+                    <Badge variant="secondary">Completed</Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>{enrollment.exam.organization.name}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {latestSession?.score !== null && latestSession?.score !== undefined && (
+                  <div className="text-lg font-semibold">
+                    Score: {latestSession.score} / 100
+                  </div>
+                )}
+                {latestSession?.completedAt && (
+                  <div className="text-sm text-gray-600">
+                    Completed {formatDate(latestSession.completedAt)}
+                  </div>
+                )}
+                {enrollment.attemptsUsed >= enrollment.exam.allowedAttempts && (
+                  <Badge variant="secondary" className="mt-2">
+                    Maximum attempts reached ({enrollment.attemptsUsed}/{enrollment.exam.allowedAttempts})
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </Section>
 
       {/* Empty State */}
