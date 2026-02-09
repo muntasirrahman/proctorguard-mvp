@@ -42,6 +42,7 @@ export async function startExam(enrollmentId: string) {
         exam: true,
         sessions: {
           where: { status: SessionStatus.IN_PROGRESS },
+          orderBy: { createdAt: 'desc' },
           take: 1,
         },
       },
@@ -81,33 +82,45 @@ export async function startExam(enrollmentId: string) {
       }
     }
 
-    // Count total attempts (all sessions regardless of status)
-    const totalAttempts = await prisma.examSession.count({
-      where: {
-        enrollmentId: enrollment.id,
-      },
-    });
+    // Use transaction for atomic session creation
+    const examSession = await prisma.$transaction(async (tx) => {
+      // Re-fetch enrollment inside transaction to avoid race conditions
+      const freshEnrollment = await tx.enrollment.findUnique({
+        where: { id: enrollmentId },
+        include: { exam: true },
+      });
 
-    // Check attempts remaining
-    if (totalAttempts >= enrollment.exam.allowedAttempts) {
-      return { success: false, error: 'Maximum attempts reached' };
-    }
+      if (!freshEnrollment) {
+        throw new Error('Enrollment not found');
+      }
 
-    // Create session
-    const examSession = await prisma.examSession.create({
-      data: {
-        examId: enrollment.exam.id,
-        enrollmentId: enrollment.id,
-        candidateId: session.user.id,
-        attemptNumber: totalAttempts + 1,
-        status: SessionStatus.NOT_STARTED,
-      },
-    });
+      // Count attempts inside transaction
+      const totalAttempts = await tx.examSession.count({
+        where: { enrollmentId: freshEnrollment.id },
+      });
 
-    // Increment attemptsUsed
-    await prisma.enrollment.update({
-      where: { id: enrollmentId },
-      data: { attemptsUsed: enrollment.attemptsUsed + 1 },
+      if (totalAttempts >= freshEnrollment.exam.allowedAttempts) {
+        throw new Error('Maximum attempts reached');
+      }
+
+      // Create session
+      const examSession = await tx.examSession.create({
+        data: {
+          examId: freshEnrollment.exam.id,
+          enrollmentId: freshEnrollment.id,
+          candidateId: session.user.id,
+          attemptNumber: totalAttempts + 1,
+          status: SessionStatus.NOT_STARTED,
+        },
+      });
+
+      // Increment attemptsUsed
+      await tx.enrollment.update({
+        where: { id: enrollmentId },
+        data: { attemptsUsed: freshEnrollment.attemptsUsed + 1 },
+      });
+
+      return examSession;
     });
 
     revalidatePath('/dashboard/exams');
