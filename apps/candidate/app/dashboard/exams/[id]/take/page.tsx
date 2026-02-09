@@ -2,10 +2,9 @@ import { auth } from '@proctorguard/auth';
 import { prisma, SessionStatus } from '@proctorguard/database';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@proctorguard/ui';
-import { Button } from '@proctorguard/ui';
-import { Clock, FileText } from 'lucide-react';
-import Link from 'next/link';
+import { PreExamChecks } from './pre-exam-checks';
+import { ExamInterface } from './exam-interface';
+import { startExamSession } from '@/app/actions/sessions';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -71,86 +70,98 @@ export default async function TakeExamPage({ params, searchParams }: PageProps) 
     redirect('/dashboard/exams');
   }
 
-  // 5. Calculate time info
-  const startedAt = examSession.startedAt ? new Date(examSession.startedAt) : null;
-  const scheduledEnd = examSession.exam.scheduledEnd ? new Date(examSession.exam.scheduledEnd) : null;
+  // 5. Fetch questions for this exam
+  const questions = await prisma.question.findMany({
+    where: {
+      questionBankId: examSession.exam.questionBankId,
+      status: 'APPROVED', // Only show approved questions
+    },
+    orderBy: { createdAt: 'asc' }, // Ensure consistent question order
+  });
 
-  let timeRemaining = 'Unknown';
-  if (startedAt && scheduledEnd) {
-    const durationEnd = new Date(startedAt.getTime() + examSession.exam.duration * 60 * 1000);
-    const expiresAt = scheduledEnd < durationEnd ? scheduledEnd : durationEnd;
-    const remaining = Math.floor((expiresAt.getTime() - now.getTime()) / 1000 / 60);
+  // 6. Fetch existing answers for this session
+  const existingAnswers = await prisma.answer.findMany({
+    where: { sessionId: sessionId },
+    select: {
+      questionId: true,
+      answer: true,
+    },
+  });
 
-    if (remaining > 0) {
-      if (remaining < 60) {
-        timeRemaining = `${remaining} minutes`;
-      } else {
-        const hours = Math.floor(remaining / 60);
-        const mins = remaining % 60;
-        timeRemaining = `${hours}h ${mins}m`;
-      }
-    } else {
-      timeRemaining = 'Expired';
-    }
+  // 7. Calculate attempt number
+  const previousSessions = await prisma.examSession.count({
+    where: {
+      enrollmentId: enrollmentId,
+      candidateId: session.user.id,
+    },
+  });
+  const attemptNumber = previousSessions;
+
+  // 8. Conditional rendering based on session status
+
+  // If NOT_STARTED: show PreExamChecks
+  if (examSession.status === SessionStatus.NOT_STARTED) {
+    return (
+      <PreExamChecks
+        exam={{
+          title: examSession.exam.title,
+          instructions: examSession.exam.instructions,
+          duration: examSession.exam.duration,
+          enableRecording: examSession.exam.enableRecording,
+          organization: {
+            name: examSession.exam.organization.name,
+          },
+        }}
+        questionCount={questions.length}
+        attemptNumber={attemptNumber}
+        onBeginExam={async () => {
+          'use server';
+          await startExamSession(sessionId);
+          redirect(`/dashboard/exams/${enrollmentId}/take?session=${sessionId}`);
+        }}
+        onExit={() => {
+          redirect('/dashboard/exams');
+        }}
+      />
+    );
   }
 
-  // 6. Render placeholder
-  return (
-    <div className="container mx-auto py-8 max-w-4xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-6 w-6" />
-            {examSession.exam.title}
-          </CardTitle>
-          <p className="text-sm text-gray-600">{examSession.exam.organization.name}</p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Session Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-semibold mb-2">Session Information</h3>
-            <div className="space-y-1 text-sm">
-              <p>Attempt: {examSession.attemptNumber} of {examSession.exam.allowedAttempts}</p>
-              <p>Status: {examSession.status}</p>
-              {startedAt && <p>Started: {startedAt.toLocaleString()}</p>}
-              <div className="flex items-center gap-2 font-semibold text-blue-700">
-                <Clock className="h-4 w-4" />
-                <span>Time Remaining: {timeRemaining}</span>
-              </div>
-            </div>
-          </div>
+  // If IN_PROGRESS: show ExamInterface
+  if (examSession.status === SessionStatus.IN_PROGRESS) {
+    return (
+      <ExamInterface
+        session={{
+          id: examSession.id,
+          startedAt: examSession.startedAt!,
+          lastViewedQuestionIndex: examSession.lastViewedQuestionIndex || 0,
+        }}
+        exam={{
+          title: examSession.exam.title,
+          duration: examSession.exam.duration,
+        }}
+        questions={questions.map((q) => ({
+          id: q.id,
+          questionText: q.text,
+          questionType: q.type as 'multiple_choice' | 'true_false' | 'short_answer' | 'essay',
+          points: q.points,
+          options: Array.isArray(q.options)
+            ? (q.options as Array<{ id: string; optionText: string }>)
+            : [],
+        }))}
+        existingAnswers={existingAnswers.map((a) => ({
+          questionId: a.questionId,
+          answer: a.answer as any, // Parse JSON answer field
+        }))}
+        onSubmit={() => {
+          redirect('/dashboard/exams');
+        }}
+        onExit={() => {
+          redirect('/dashboard/exams');
+        }}
+      />
+    );
+  }
 
-          {/* Coming Soon Message */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-            <h2 className="text-xl font-semibold mb-2">Exam Interface Coming Soon</h2>
-            <p className="text-gray-600 mb-4">
-              The exam-taking interface will be implemented in Phase 4.
-            </p>
-            <p className="text-sm text-gray-500">
-              This page validates that your session exists and you have permission to access it.
-            </p>
-          </div>
-
-          {/* Timer Display (Non-functional) */}
-          <div className="border border-gray-300 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Timer (Placeholder)</span>
-              <div className="text-2xl font-bold font-mono text-gray-400">
-                {timeRemaining}
-              </div>
-            </div>
-          </div>
-
-          {/* Exit Button */}
-          <div className="flex justify-center pt-4">
-            <Button asChild variant="outline" size="lg">
-              <Link href="/dashboard/exams">
-                Exit to Dashboard
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  // Fallback (should not reach here due to earlier validation)
+  redirect('/dashboard/exams');
 }
