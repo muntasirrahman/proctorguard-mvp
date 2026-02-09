@@ -2,10 +2,9 @@ import { auth } from '@proctorguard/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DashboardShell } from '@proctorguard/ui';
-import { Calendar } from 'lucide-react';
 
 const navItems = [
-  { label: 'Exams', href: '/dashboard', icon: Calendar },
+  { label: 'Exams', href: '/dashboard', icon: 'Calendar' },
   // Add more items as needed in future phases
 ];
 
