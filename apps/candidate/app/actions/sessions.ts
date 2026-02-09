@@ -104,6 +104,12 @@ export async function startExam(enrollmentId: string) {
       },
     });
 
+    // Increment attemptsUsed
+    await prisma.enrollment.update({
+      where: { id: enrollmentId },
+      data: { attemptsUsed: enrollment.attemptsUsed + 1 },
+    });
+
     revalidatePath('/dashboard/exams');
 
     return { success: true, sessionId: examSession.id };
