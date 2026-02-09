@@ -328,6 +328,7 @@ model Exam {
   // Configuration
   passingScore    Int        @default(70)
   allowedAttempts Int        @default(1)
+  instructions    String?    @db.Text  // Pre-exam instructions
 
   // Proctoring settings
   requireIdentityVerification Boolean @default(true)
@@ -409,6 +410,9 @@ model ExamSession {
   reviewedBy        String?
   reviewedAt        DateTime?
   reviewNotes       String?
+
+  // Resume support
+  lastViewedQuestionIndex Int       @default(0)  // Track resume position
 
   metadata          Json?
   createdAt         DateTime      @default(now())
