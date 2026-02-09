@@ -104,24 +104,11 @@ function determineExamState(enrollment: EnrolledExam): ExamState {
   // Check for IN_PROGRESS session
   const latestSession = sessions[0];
   if (latestSession?.status === 'IN_PROGRESS') {
-    // Check if expired
-    if (exam.scheduledEnd && latestSession.startedAt) {
-      const windowEnd = new Date(exam.scheduledEnd);
-      const durationEnd = new Date(
-        new Date(latestSession.startedAt).getTime() + exam.duration * 60 * 1000
-      );
-      const expiresAt = windowEnd < durationEnd ? windowEnd : durationEnd;
-
-      if (now < expiresAt) {
-        return 'IN_PROGRESS';
-      }
-    } else if (exam.scheduledEnd) {
-      const windowEnd = new Date(exam.scheduledEnd);
-      if (now < windowEnd) {
-        return 'IN_PROGRESS';
-      }
-    } else {
-      // No expiration if no schedule
+    const minutesRemaining = getMinutesRemaining(
+      { startedAt: latestSession.startedAt },
+      { duration: exam.duration, scheduledEnd: exam.scheduledEnd }
+    );
+    if (minutesRemaining > 0) {
       return 'IN_PROGRESS';
     }
   }
