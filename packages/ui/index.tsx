@@ -15,6 +15,7 @@ export * from './components/sign-in-form';
 export * from './components/sign-up-form';
 export * from './components/user-menu';
 export * from './components/dashboard-shell';
+export * from './components/staff-navigation';
 
 // Export utilities
 export * from './lib/utils';
