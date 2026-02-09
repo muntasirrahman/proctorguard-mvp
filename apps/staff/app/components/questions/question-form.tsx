@@ -148,7 +148,7 @@ export function QuestionForm({ bankId, question }: QuestionFormProps) {
       router.refresh();
 
       if (saveAndClose) {
-        router.push(`/dashboard/banks/${bankId}`);
+        router.push(`/dashboard/questions/${bankId}`);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to save question');
@@ -419,7 +419,7 @@ export function QuestionForm({ bankId, question }: QuestionFormProps) {
           Save & Close
         </Button>
         <Button
-          onClick={() => router.push(`/dashboard/banks/${bankId}`)}
+          onClick={() => router.push(`/dashboard/questions/${bankId}`)}
           disabled={isLoading}
           variant="outline"
         >

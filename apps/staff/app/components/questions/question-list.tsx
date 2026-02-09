@@ -109,7 +109,7 @@ export function QuestionList({ bank, questions }: QuestionListProps) {
             <p className="text-muted-foreground mt-2">{bank.description}</p>
           )}
         </div>
-        <Link href={`/dashboard/banks/${bank.id}/questions/new`}>
+        <Link href={`/dashboard/questions/${bank.id}/questions/new`}>
           <Button>Create Question</Button>
         </Link>
       </div>
@@ -144,7 +144,7 @@ export function QuestionList({ bank, questions }: QuestionListProps) {
                   <TableCell>{getStatusBadge(question.status)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
-                      <Link href={`/dashboard/banks/${bank.id}/questions/${question.id}`}>
+                      <Link href={`/dashboard/questions/${bank.id}/questions/${question.id}`}>
                         <Button variant="outline" size="sm">
                           Edit
                         </Button>

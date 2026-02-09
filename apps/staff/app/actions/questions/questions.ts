@@ -147,7 +147,7 @@ export async function createQuestion(bankId: string, data: QuestionData) {
     }
   });
 
-  revalidatePath(`/dashboard/banks/${bankId}`);
+  revalidatePath(`/dashboard/questions/${bankId}`);
   return question;
 }
 
@@ -243,8 +243,8 @@ export async function updateQuestion(questionId: string, data: Partial<QuestionD
     }
   });
 
-  revalidatePath(`/dashboard/banks/${existing.questionBankId}`);
-  revalidatePath(`/dashboard/banks/${existing.questionBankId}/questions/${questionId}`);
+  revalidatePath(`/dashboard/questions/${existing.questionBankId}`);
+  revalidatePath(`/dashboard/questions/${existing.questionBankId}/questions/${questionId}`);
   return question;
 }
 
@@ -283,5 +283,5 @@ export async function deleteQuestion(questionId: string) {
     }
   });
 
-  revalidatePath(`/dashboard/banks/${existing.questionBankId}`);
+  revalidatePath(`/dashboard/questions/${existing.questionBankId}`);
 }

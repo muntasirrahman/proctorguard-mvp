@@ -182,7 +182,7 @@ export async function updateQuestionBank(bankId: string, data: Partial<QuestionB
   });
 
   revalidatePath('/dashboard');
-  revalidatePath(`/dashboard/banks/${bankId}`);
+  revalidatePath(`/dashboard/questions/${bankId}`);
   return bank;
 }
 

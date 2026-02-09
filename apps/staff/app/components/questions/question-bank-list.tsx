@@ -148,7 +148,7 @@ export function QuestionBankList({ banks, organizationId }: QuestionBankListProp
                 <TableRow
                   key={bank.id}
                   className="cursor-pointer"
-                  onClick={() => router.push(`/dashboard/banks/${bank.id}`)}
+                  onClick={() => router.push(`/dashboard/questions/${bank.id}`)}
                 >
                   <TableCell className="font-medium">{bank.title}</TableCell>
                   <TableCell>{getStatusBadge(bank.status)}</TableCell>
