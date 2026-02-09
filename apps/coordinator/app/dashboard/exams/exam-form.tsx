@@ -17,7 +17,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Switch,
+  Checkbox,
 } from '@proctorguard/ui';
 import { createExam, updateExam, type CreateExamInput } from '../../actions/exams';
 import { Loader2 } from 'lucide-react';
@@ -266,7 +266,7 @@ export function ExamForm({ questionBanks, departments, initialData, mode }: Exam
                   Record candidate via webcam during exam
                 </p>
               </div>
-              <Switch
+              <Checkbox
                 id="enableRecording"
                 checked={formData.enableRecording}
                 onCheckedChange={(checked) =>

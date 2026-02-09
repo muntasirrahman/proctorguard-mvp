@@ -1,4 +1,4 @@
-import { getApprovedQuestionBanks, getDepartments } from '../../actions/exams';
+import { getApprovedQuestionBanks, getDepartments } from '../../../actions/exams';
 import { ExamForm } from '../exam-form';
 
 export default async function NewExamPage() {

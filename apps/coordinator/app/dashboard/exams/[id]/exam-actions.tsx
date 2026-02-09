@@ -19,7 +19,7 @@ import {
 } from '@proctorguard/ui';
 import { MoreVertical, Trash2, Play, StopCircle } from 'lucide-react';
 import { ExamStatus } from '@proctorguard/database';
-import { updateExamStatus, deleteExam } from '../../actions/exams';
+import { updateExamStatus, deleteExam } from '../../../actions/exams';
 
 type ExamActionsProps = {
   examId: string;

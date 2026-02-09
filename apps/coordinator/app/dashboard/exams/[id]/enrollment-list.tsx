@@ -32,7 +32,7 @@ import {
   approveEnrollment,
   rejectEnrollment,
   removeEnrollment,
-} from '../../actions/enrollments';
+} from '../../../actions/enrollments';
 
 type Enrollment = {
   id: string;

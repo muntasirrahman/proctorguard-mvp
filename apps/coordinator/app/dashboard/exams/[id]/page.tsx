@@ -1,5 +1,5 @@
-import { getExamById } from '../../actions/exams';
-import { getEnrollments } from '../../actions/enrollments';
+import { getExamById } from '../../../actions/exams';
+import { getEnrollments } from '../../../actions/enrollments';
 import {
   Card,
   CardContent,
