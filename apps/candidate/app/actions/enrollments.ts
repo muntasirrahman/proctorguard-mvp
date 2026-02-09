@@ -1,7 +1,7 @@
 'use server';
 
 import { auth } from '@proctorguard/auth';
-import { prisma, EnrollmentStatus } from '@proctorguard/database';
+import { prisma, EnrollmentStatus, SessionStatus } from '@proctorguard/database';
 import { requirePermission, Permission } from '@proctorguard/permissions';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
@@ -112,6 +112,19 @@ export async function getEnrolledExams() {
             select: {
               name: true,
             },
+          },
+        },
+      },
+      sessions: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        where: {
+          status: {
+            in: [
+              SessionStatus.NOT_STARTED,
+              SessionStatus.IN_PROGRESS,
+              SessionStatus.COMPLETED,
+            ],
           },
         },
       },
