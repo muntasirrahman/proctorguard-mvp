@@ -211,3 +211,158 @@ export async function resumeSession(enrollmentId: string) {
     return { success: false, error: 'Failed to resume session. Please try again.' };
   }
 }
+
+/**
+ * Transition session from NOT_STARTED to IN_PROGRESS
+ * Sets startedAt timestamp
+ */
+export async function startExamSession(sessionId: string) {
+  const { session, orgId } = await getSessionAndOrg();
+
+  // Fetch and validate session
+  const examSession = await prisma.examSession.findUnique({
+    where: { id: sessionId },
+    include: { exam: true },
+  });
+
+  if (!examSession) {
+    throw new Error('Session not found');
+  }
+
+  if (examSession.candidateId !== session.user.id) {
+    throw new Error('Unauthorized');
+  }
+
+  if (examSession.status !== SessionStatus.NOT_STARTED) {
+    throw new Error('Session already started');
+  }
+
+  // Check not expired
+  const now = new Date();
+  if (examSession.exam.scheduledEnd && now > new Date(examSession.exam.scheduledEnd)) {
+    throw new Error('Exam window has closed');
+  }
+
+  // Update session
+  await prisma.examSession.update({
+    where: { id: sessionId },
+    data: {
+      status: SessionStatus.IN_PROGRESS,
+      startedAt: now,
+    },
+  });
+
+  revalidatePath('/dashboard/exams');
+  return { success: true };
+}
+
+type AnswerData = {
+  selectedOption?: string;
+  textResponse?: string;
+  isFlagged: boolean;
+  questionIndex: number;
+};
+
+/**
+ * Save or update answer for a question
+ * Also updates lastViewedQuestionIndex for resume
+ */
+export async function saveAnswer(
+  sessionId: string,
+  questionId: string,
+  answerData: AnswerData
+) {
+  const { session } = await getSessionAndOrg();
+
+  // Validate session ownership and status
+  const examSession = await prisma.examSession.findUnique({
+    where: { id: sessionId },
+    select: {
+      id: true,
+      candidateId: true,
+      status: true,
+    },
+  });
+
+  if (!examSession || examSession.candidateId !== session.user.id) {
+    throw new Error('Unauthorized');
+  }
+
+  if (examSession.status !== SessionStatus.IN_PROGRESS) {
+    throw new Error('Session is not in progress');
+  }
+
+  // Build answer JSON object
+  const answerJson = {
+    selectedOption: answerData.selectedOption,
+    textResponse: answerData.textResponse,
+    isFlagged: answerData.isFlagged,
+  };
+
+  // Upsert answer and update session
+  await prisma.$transaction([
+    prisma.answer.upsert({
+      where: {
+        sessionId_questionId: {
+          sessionId,
+          questionId,
+        },
+      },
+      create: {
+        sessionId,
+        questionId,
+        answer: answerJson,
+      },
+      update: {
+        answer: answerJson,
+        updatedAt: new Date(),
+      },
+    }),
+    prisma.examSession.update({
+      where: { id: sessionId },
+      data: {
+        lastViewedQuestionIndex: answerData.questionIndex,
+      },
+    }),
+  ]);
+
+  return { success: true };
+}
+
+/**
+ * Transition session from IN_PROGRESS to COMPLETED
+ * Sets completedAt timestamp
+ */
+export async function submitExam(sessionId: string) {
+  const { session } = await getSessionAndOrg();
+
+  // Validate session
+  const examSession = await prisma.examSession.findUnique({
+    where: { id: sessionId },
+    select: {
+      id: true,
+      candidateId: true,
+      status: true,
+    },
+  });
+
+  if (!examSession || examSession.candidateId !== session.user.id) {
+    throw new Error('Unauthorized');
+  }
+
+  if (examSession.status !== SessionStatus.IN_PROGRESS) {
+    throw new Error('Session is not in progress');
+  }
+
+  // Update session
+  await prisma.examSession.update({
+    where: { id: sessionId },
+    data: {
+      status: SessionStatus.COMPLETED,
+      completedAt: new Date(),
+    },
+  });
+
+  revalidatePath('/dashboard/exams');
+  return { success: true };
+}
