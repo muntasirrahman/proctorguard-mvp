@@ -1,125 +1,110 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Quick reference for working with the ProctorGuard MVP codebase.
 
-## Repository
+## Project Info
 
-**Path**: `/Users/muntasir/workspace/proctor-exam/proctor-exam-mvp`
-**Type**: Turborepo monorepo
-**Stack**: Next.js 16 + React 19 + Prisma + PostgreSQL + Better Auth
+**Type:** Turborepo monorepo
+**Stack:** Next.js 16 + React 19 + Prisma + PostgreSQL + Better Auth
+**Apps:** 2 (Candidate Portal + Staff Portal)
 
-## Commands
+---
+
+## Essential Commands
 
 ```bash
 # Development
-npm run dev                  # Run both apps in parallel (candidate + staff)
-npm run dev:candidate        # Run candidate app only (port 4000)
-npm run dev:staff            # Run staff portal (port 4001)
+npm run dev                  # Start both apps (candidate + staff)
+npm run dev:candidate        # Candidate only (port 4000)
+npm run dev:staff            # Staff only (port 4001)
 
-# Build & Lint
-npm run build                # Build all apps with Turborepo
-npm run lint                 # Lint all apps
-npm run clean                # Clean build artifacts
-
-# Database (run from monorepo root)
-npm run db:generate          # Generate Prisma Client after schema changes
-npm run db:migrate           # Create and run migrations
-npm run db:seed              # Seed demo data (7 test users)
+# Database
+npm run db:migrate           # Run migrations
+npm run db:seed              # Seed demo data (11 test users)
 npm run db:studio            # Open Prisma Studio GUI
 
-# Individual app commands (from apps/[app-name]/)
-npm run dev                  # Start dev server
-npm run build                # Build for production
-npm run lint                 # ESLint
+# Build
+npm run build                # Build all apps
+npm run lint                 # Lint all apps
 ```
 
-## Architecture
+---
 
-### Monorepo Structure
+## Database Access
+
+### Local PostgreSQL
 
 ```
-proctor-exam-mvp/
-├── apps/                    # 2 Next.js applications
-│   ├── candidate/          # Port 4000 - CANDIDATE role
-│   ├── staff/              # Port 4001 - All staff roles (NEW)
-│   │                       # Unified portal for: ORG_ADMIN, EXAM_AUTHOR,
-│   │                       # EXAM_COORDINATOR, PROCTOR_REVIEWER
-│   │
-│   ├── admin/              # DEPRECATED - migrated to staff portal
-│   ├── author/             # DEPRECATED - migrated to staff portal
-│   ├── coordinator/        # DEPRECATED - migrated to staff portal
-│   └── reviewer/           # DEPRECATED - migrated to staff portal
-│
-└── packages/               # Shared code
-    ├── database/          # @proctorguard/database - Prisma client
-    ├── auth/              # @proctorguard/auth - Better Auth config
-    ├── permissions/       # @proctorguard/permissions - RBAC system
-    ├── ui/                # @proctorguard/ui - shadcn/ui components
-    └── config/            # @proctorguard/config - Shared types
+Host: localhost
+Port: 5432
+Database: proctorguard_dev
+User: proctorguard_user
+Password: ProctorGuard2024!Secure
 ```
 
-**Architecture Change (2026-02-09):** Consolidated 4 staff apps into unified Staff Portal with dynamic permission-based navigation. Multi-role users now access all their features in one place. See `docs/plans/2026-02-09-staff-portal-consolidation-design.md`.
+**Connection String:**
+```
+postgresql://proctorguard_user:ProctorGuard2024!Secure@localhost:5432/proctorguard_dev
+```
 
-### Critical Design Patterns
+### Environment Variables
 
-#### 1. Separation of Duties (Enforced by Architecture)
+Create `packages/database/.env`:
 
-Each app serves ONE role with strict permission boundaries:
+```env
+DATABASE_URL="postgresql://proctorguard_user:ProctorGuard2024!Secure@localhost:5432/proctorguard_dev?pgbouncer=true"
+DIRECT_URL="postgresql://proctorguard_user:ProctorGuard2024!Secure@localhost:5432/proctorguard_dev"
+```
 
-- **Authors** create questions but CANNOT see who takes exams or enrollments
-- **Coordinators** schedule exams but CANNOT create questions
-- **Enrollment Managers** invite candidates but CANNOT configure exams
-- **Reviewers** adjudicate flags but CANNOT create content
+---
 
-This is enforced at three levels:
-1. **Separate apps** - each app only surfaces features for its role
-2. **Database permissions** - `packages/permissions/index.ts` RBAC matrix
-3. **Server-side checks** - all Server Actions must validate permissions
+## App Structure
 
-#### 2. Authentication Flow (Better Auth)
+```
+apps/
+├── candidate/          # Port 4000 - CANDIDATE role
+└── staff/              # Port 4001 - All staff roles
+    └── dashboard/
+        ├── questions/      # EXAM_AUTHOR features
+        ├── exams/          # EXAM_COORDINATOR features
+        ├── sessions/       # PROCTOR_REVIEWER features
+        └── admin/          # ORG_ADMIN features
 
-**Each app has three required files**:
+packages/
+├── database/           # @proctorguard/database - Prisma
+├── auth/               # @proctorguard/auth - Better Auth
+├── permissions/        # @proctorguard/permissions - RBAC
+├── ui/                 # @proctorguard/ui - Components
+└── config/             # @proctorguard/config - Types
+```
 
-1. `/app/api/auth/[...all]/route.ts` - Auth API handler
-   ```typescript
-   import { auth } from '@proctorguard/auth';
-   import { toNextJsHandler } from 'better-auth/next-js';
+---
 
-   export const { POST, GET } = toNextJsHandler(auth);
-   ```
+## Code Patterns
 
-2. `/middleware.ts` - Route protection
-   ```typescript
-   // Checks 'better-auth.session_token' cookie
-   // Redirects unauthenticated users to /auth/signin
-   ```
+### Authentication (Server Component)
 
-3. `/next.config.ts` - Monorepo file tracing
-   ```typescript
-   {
-     outputFileTracingRoot: path.join(__dirname, '../../'),
-     transpilePackages: ['@proctorguard/*'],
-   }
-   ```
-
-**Getting session in Server Components**:
 ```typescript
 import { auth } from '@proctorguard/auth';
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
-const session = await auth.api.getSession({ headers: await headers() });
-if (!session) redirect('/auth/signin');
+export default async function ProtectedPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) redirect('/auth/signin');
+
+  return <div>Protected content</div>;
+}
 ```
 
-#### 3. Permission Checks (RBAC)
-
-**Always validate permissions server-side in Server Actions**:
+### Permission Check (Server Action)
 
 ```typescript
 'use server';
 
 import { auth } from '@proctorguard/auth';
 import { requirePermission, Permission } from '@proctorguard/permissions';
+import { prisma } from '@proctorguard/database';
 import { headers } from 'next/headers';
 
 export async function createQuestion(data: QuestionData) {
@@ -131,112 +116,29 @@ export async function createQuestion(data: QuestionData) {
     Permission.CREATE_QUESTION
   );
 
-  // Now safe to proceed
+  return await prisma.question.create({ data });
 }
 ```
 
-**Permission system is in** `packages/permissions/index.ts`:
-- `ROLE_PERMISSIONS` - matrix of which roles have which permissions
-- `hasPermission()` - check single permission
-- `hasAllPermissions()` - check multiple permissions
-- `requirePermission()` - throw if permission denied
-- Resource helpers: `canAccessQuestionBank()`, `canAccessExam()`, `canAccessSession()`
-
-#### 4. Database Access Pattern
-
-**Prisma client is ONLY available through** `@proctorguard/database`:
+### Database Query
 
 ```typescript
-import { prisma, Role, QuestionStatus } from '@proctorguard/database';
+import { prisma, QuestionStatus } from '@proctorguard/database';
 
 const questionBanks = await prisma.questionBank.findMany({
-  where: { authorId: session.user.id },
+  where: {
+    authorId: session.user.id,
+    organizationId: session.organization.id,
+  },
   include: { questions: true }
 });
 ```
 
-**After schema changes**:
-1. Edit `packages/database/prisma/schema.prisma`
-2. Run `npm run db:migrate` (creates migration + generates client)
-3. Prisma Client is automatically available in all packages
+---
 
-#### 5. Multi-Role User System
+## Package Imports
 
-**Key database models**:
-- `User` - authentication record (Better Auth manages this)
-- `UserRole` - junction table for user-organization-role assignments
-- Users can have MULTIPLE roles in ONE organization
-- Users can belong to MULTIPLE organizations
-
-**Getting user's roles**:
-```typescript
-import { getUserRoles, getUserPermissions } from '@proctorguard/permissions';
-
-const roles = await getUserRoles(userId, organizationId);
-const permissions = await getUserPermissions(userId, organizationId);
-```
-
-## Database Schema (Key Points)
-
-**9 Roles** (in `Role` enum):
-- `SUPER_ADMIN` - full platform access
-- `ORG_ADMIN` - organization management
-- `EXAM_AUTHOR` - content creation only
-- `EXAM_COORDINATOR` - exam scheduling only
-- `ENROLLMENT_MANAGER` - candidate invitations only
-- `PROCTOR_REVIEWER` - session review only
-- `QUALITY_ASSURANCE` - audit and approval
-- `REPORT_VIEWER` - read-only analytics
-- `CANDIDATE` - exam taker
-
-**Core Models**:
-- `Organization` → `Department` → `UserRole` → `User`
-- `QuestionBank` → `Question`
-- `Exam` → `Enrollment` → `ExamSession` → `Answer` + `Flag`
-- `AuditLog` - tracks all sensitive operations
-
-**Enums to know**:
-- `QuestionStatus`: DRAFT, IN_REVIEW, APPROVED, REJECTED, ARCHIVED
-- `ExamStatus`: DRAFT, SCHEDULED, ACTIVE, COMPLETED, CANCELLED, ARCHIVED
-- `SessionStatus`: NOT_STARTED, IN_PROGRESS, COMPLETED, FLAGGED, UNDER_REVIEW, CLEARED, VIOLATION_CONFIRMED
-- `FlagType`: NO_FACE_DETECTED, MULTIPLE_FACES, LOOKING_AWAY, PHONE_DETECTED, etc.
-
-## Development Workflow
-
-### Adding a New Feature
-
-1. **Update schema** (if needed):
-   ```bash
-   # Edit packages/database/prisma/schema.prisma
-   npm run db:migrate
-   ```
-
-2. **Add permissions** (if needed):
-   ```typescript
-   // In packages/permissions/index.ts
-   export enum Permission {
-     NEW_PERMISSION = 'new_permission',
-   }
-
-   // Add to relevant roles in ROLE_PERMISSIONS
-   ```
-
-3. **Create Server Actions** with permission checks:
-   ```typescript
-   // Always import from packages
-   import { auth } from '@proctorguard/auth';
-   import { requirePermission } from '@proctorguard/permissions';
-   import { prisma } from '@proctorguard/database';
-   ```
-
-4. **Use UI components** from shared package:
-   ```typescript
-   import { Button, Card, Input } from '@proctorguard/ui';
-   ```
-
-### Monorepo Package Imports
-
-**All shared packages are scoped as** `@proctorguard/*`:
+Always use scoped names:
 
 ```typescript
 import { prisma, Role } from '@proctorguard/database';
@@ -245,63 +147,112 @@ import { requirePermission, Permission } from '@proctorguard/permissions';
 import { Button, Card } from '@proctorguard/ui';
 ```
 
-**Never import directly from** `../packages/...` - use package names.
+❌ Never: `import { prisma } from '../../../packages/database'`
 
-### Demo Accounts (After `npm run db:seed`)
+---
 
-| Email | Password | Role | App |
-|-------|----------|------|-----|
-| admin@acme.com | password123 | SUPER_ADMIN | Any |
-| orgadmin@acme.com | password123 | ORG_ADMIN | Admin (4001) |
-| author@acme.com | password123 | EXAM_AUTHOR | Author (4002) |
-| coordinator@acme.com | password123 | EXAM_COORDINATOR | Coordinator (4003) |
-| enrollment@acme.com | password123 | ENROLLMENT_MANAGER | Admin (4001) |
-| reviewer@acme.com | password123 | PROCTOR_REVIEWER | Reviewer (4004) |
-| candidate@acme.com | password123 | CANDIDATE | Candidate (4000) |
+## Demo Accounts
 
-Organization: "ACME Corporation" (ID will vary)
+All passwords: `password123`
+
+### Single-Role Users
+- author@acme.com (EXAM_AUTHOR)
+- coordinator@acme.com (EXAM_COORDINATOR)
+- reviewer@acme.com (PROCTOR_REVIEWER)
+- orgadmin@acme.com (ORG_ADMIN)
+- candidate@acme.com (CANDIDATE)
+
+### Multi-Role Users
+- author-coordinator@acme.com (AUTHOR + COORDINATOR)
+- coordinator-reviewer@acme.com (COORDINATOR + REVIEWER)
+- admin-author@acme.com (ADMIN + AUTHOR)
+- multirole@acme.com (All staff roles)
+
+---
 
 ## Security Checklist
 
 When writing server-side code:
 
 - ✅ Check session with `auth.api.getSession()`
-- ✅ Validate permissions with `requirePermission()` or `hasPermission()`
-- ✅ Never trust client-side data - validate in Server Actions
-- ✅ Use Prisma (parameterized queries) - never raw SQL
-- ✅ Log sensitive operations to `AuditLog` table
-- ✅ Enforce resource ownership (e.g., authors can only edit their own question banks)
+- ✅ Validate permissions with `requirePermission()`
+- ✅ Never trust client-side data
+- ✅ Use Prisma (never raw SQL)
+- ✅ Filter by organizationId
+- ✅ Log sensitive operations to AuditLog
 
-## Deployment Notes
+---
 
-**Environment Variables Required**:
-```env
-DATABASE_URL="postgresql://..."      # Pooled connection
-DIRECT_URL="postgresql://..."        # Direct connection (for migrations)
-BETTER_AUTH_SECRET="random-secret"   # Generate with: openssl rand -base64 32
-BETTER_AUTH_URL="https://..."        # Production URL
-BLOB_READ_WRITE_TOKEN="..."          # Vercel Blob (optional)
+## Key Roles & Permissions
+
+| Role | Can Do |
+|------|--------|
+| EXAM_AUTHOR | Create questions & question banks |
+| EXAM_COORDINATOR | Schedule exams, manage enrollments |
+| PROCTOR_REVIEWER | Review flagged sessions |
+| ORG_ADMIN | Manage users, roles, organization |
+| CANDIDATE | Take exams |
+
+**Permission system:** `packages/permissions/index.ts`
+
+---
+
+## Architecture Notes
+
+**Staff Portal (2026-02-09):** Consolidated 4 legacy apps (admin, author, coordinator, reviewer) into unified portal with permission-based navigation. Multi-role users see all their sections in one place.
+
+**Multi-role support:** Users can have multiple roles. Navigation shows aggregated permissions:
+- Author + Coordinator → Questions + Exams sections
+- Coordinator + Reviewer → Exams + Sessions sections
+
+---
+
+## Documentation
+
+### Detailed Guides
+- `docs/ARCHITECTURE.md` - System architecture & design patterns
+- `docs/DATABASE.md` - Schema reference & queries
+- `docs/DEVELOPMENT.md` - Development workflow & examples
+- `docs/SECURITY.md` - Security guidelines & best practices
+
+### Deployment
+- `docs/STAFF-PORTAL-DEPLOYMENT.md` - Production deployment guide
+- `docs/GETTING_STARTED.md` - Initial setup steps
+
+### Planning & Design
+- `docs/plans/` - Design documents & implementation plans
+- `docs/testing/` - Test plans & results
+
+---
+
+## Quick Troubleshooting
+
+**"Module not found" errors:**
+```bash
+npm run db:generate && npm install
 ```
 
-**Vercel Deployment**:
-- Each app deploys independently
-- Set `outputFileTracingRoot` ensures shared packages are included
-- Run migrations on Vercel Postgres: `npm run db:migrate`
+**Database connection errors:**
+```bash
+psql -U proctorguard_user -d proctorguard_dev
+# Verify DATABASE_URL in packages/database/.env
+```
 
-## Known Issues & Fixes
+**TypeScript errors after schema change:**
+```bash
+npm run db:generate
+# Restart TypeScript server in IDE
+```
 
-See `docs/FIXES_APPLIED.md` for Context7-documented fixes:
-1. ✅ Monorepo file tracing configured
-2. ✅ Better Auth API routes created
-3. ✅ Route protection middleware added
-4. ✅ Database permissions granted
+---
 
-## Additional Documentation
+## Important Files
 
-- `README.md` - Quick reference and setup
-- `docs/GETTING_STARTED.md` - Step-by-step setup guide
-- `docs/FIXES_APPLIED.md` - Recent fixes from Context7 review
-- `docs/DEPLOYMENT.md` - Deployment guide
-- `proctorguard_prd.json` - Product requirements (in parent directory)
-- `packages/database/prisma/schema.prisma` - Complete data model
-- `packages/permissions/index.ts` - Full permission matrix
+- `packages/database/prisma/schema.prisma` - Database schema
+- `packages/permissions/index.ts` - RBAC permission matrix
+- `packages/auth/index.ts` - Better Auth configuration
+- `apps/staff/app/dashboard/layout.tsx` - Staff portal navigation
+
+---
+
+For complete details, see `docs/` directory.
