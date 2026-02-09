@@ -28,17 +28,23 @@ export default async function TakeExamPage({ params, searchParams }: PageProps) 
   }
 
   // 3. Fetch exam session
-  const examSession = await prisma.examSession.findUnique({
-    where: { id: sessionId },
-    include: {
-      exam: {
-        include: {
-          organization: true,
+  let examSession;
+  try {
+    examSession = await prisma.examSession.findUnique({
+      where: { id: sessionId },
+      include: {
+        exam: {
+          include: {
+            organization: true,
+          },
         },
+        enrollment: true,
       },
-      enrollment: true,
-    },
-  });
+    });
+  } catch (error) {
+    console.error('Failed to load exam session:', error);
+    redirect('/dashboard/exams');
+  }
 
   // 4. Validate session
   if (!examSession) {
@@ -53,8 +59,19 @@ export default async function TakeExamPage({ params, searchParams }: PageProps) 
     redirect('/dashboard/exams');
   }
 
-  // 5. Calculate time info
+  // Only allow access to NOT_STARTED or IN_PROGRESS sessions
+  if (examSession.status !== SessionStatus.NOT_STARTED &&
+      examSession.status !== SessionStatus.IN_PROGRESS) {
+    redirect('/dashboard/exams');
+  }
+
+  // Check if exam window has closed
   const now = new Date();
+  if (examSession.exam.scheduledEnd && now > new Date(examSession.exam.scheduledEnd)) {
+    redirect('/dashboard/exams');
+  }
+
+  // 5. Calculate time info
   const startedAt = examSession.startedAt ? new Date(examSession.startedAt) : null;
   const scheduledEnd = examSession.exam.scheduledEnd ? new Date(examSession.exam.scheduledEnd) : null;
 
