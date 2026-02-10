@@ -59,6 +59,13 @@ export function ExamInterface({
   );
   const [showReview, setShowReview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<{
+    score: number;
+    passed: boolean;
+    totalScore: number;
+    maxScore: number;
+  } | null>(null);
 
   const currentQuestion = questions[currentIndex];
 
@@ -115,17 +122,104 @@ export function ExamInterface({
 
   // Submit handler
   const handleSubmit = async () => {
+    setIsSubmitting(true);
     try {
-      await submitExam(session.id);
-      onSubmit();
+      const result = await submitExam(session.id);
+
+      if (result.success && result.score !== undefined) {
+        setSubmissionResult({
+          score: result.score,
+          passed: result.passed,
+          totalScore: result.totalScore,
+          maxScore: result.maxScore,
+        });
+
+        // Show score for 2 seconds before redirecting
+        setTimeout(() => {
+          onSubmit();
+        }, 2000);
+      } else {
+        onSubmit();
+      }
     } catch (error) {
       console.error('Failed to submit exam:', error);
+      setIsSubmitting(false);
       alert('Failed to submit exam. Please try again.');
     }
   };
 
   // Review screen placeholder (will be replaced in next task)
   if (showReview) {
+    // Show submission result if available
+    if (submissionResult) {
+      return (
+        <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
+          <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8 text-center">
+            <div className="mb-6">
+              {submissionResult.passed ? (
+                <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-8 h-8 text-green-600"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="w-16 h-16 mx-auto bg-orange-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-8 h-8 text-orange-600"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Exam Submitted!</h2>
+            <p className="text-gray-600 mb-6">
+              {submissionResult.passed ? 'Congratulations, you passed!' : 'You did not pass this time.'}
+            </p>
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {submissionResult.score}%
+              </div>
+              <div className="text-sm text-gray-500">
+                {submissionResult.totalScore} / {submissionResult.maxScore} points
+              </div>
+            </div>
+            <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Show loading state while submitting
+    if (isSubmitting) {
+      return (
+        <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
+          <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8 text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 mx-auto border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Scoring your exam...</h2>
+            <p className="text-gray-600">Please wait while we calculate your results.</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Normal review screen
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
@@ -137,7 +231,9 @@ export function ExamInterface({
             <Button onClick={() => setShowReview(false)} variant="outline">
               Back to Exam
             </Button>
-            <Button onClick={handleSubmit}>Submit Exam</Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              Submit Exam
+            </Button>
           </div>
         </div>
       </div>

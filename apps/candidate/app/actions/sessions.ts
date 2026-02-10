@@ -4,6 +4,7 @@ import { auth } from '@proctorguard/auth';
 import { prisma, SessionStatus } from '@proctorguard/database';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { scoreExamSession, type ScoringResult } from './scoring';
 
 /**
  * Helper to get session and validate candidate role
@@ -331,7 +332,7 @@ export async function saveAnswer(
 
 /**
  * Transition session from IN_PROGRESS to COMPLETED
- * Sets completedAt timestamp
+ * Sets completedAt timestamp and scores the exam
  */
 export async function submitExam(sessionId: string) {
   const { session } = await getSessionAndOrg();
@@ -354,15 +355,28 @@ export async function submitExam(sessionId: string) {
     throw new Error('Session is not in progress');
   }
 
-  // Update session
-  await prisma.examSession.update({
-    where: { id: sessionId },
-    data: {
-      status: SessionStatus.COMPLETED,
-      completedAt: new Date(),
-    },
+  // Mark session as completed and score the exam in a transaction
+  const scoringResult = await prisma.$transaction(async (tx) => {
+    // 1. Mark session as completed
+    await tx.examSession.update({
+      where: { id: sessionId },
+      data: {
+        status: SessionStatus.COMPLETED,
+        completedAt: new Date(),
+      },
+    });
+
+    // 2. Score the exam (pass transaction to avoid nesting)
+    return await scoreExamSession(sessionId, tx);
   });
 
   revalidatePath('/dashboard/exams');
-  return { success: true };
+
+  return {
+    success: true,
+    score: scoringResult.percentage,
+    passed: scoringResult.passed,
+    totalScore: scoringResult.totalScore,
+    maxScore: scoringResult.maxPossibleScore,
+  };
 }
