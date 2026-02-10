@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@proctorguard/ui';
 import { Button } from '@proctorguard/ui';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { startExamSession } from '@/app/actions/sessions';
 
 type PreExamChecksProps = {
   exam: {
@@ -17,17 +19,18 @@ type PreExamChecksProps = {
   };
   questionCount: number;
   attemptNumber: number;
-  onBeginExam: () => void;
-  onExit: () => void;
+  enrollmentId: string;
 };
 
 export function PreExamChecks({
   exam,
   questionCount,
   attemptNumber,
-  onBeginExam,
-  onExit,
+  enrollmentId,
 }: PreExamChecksProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('session');
   const [browserCheck, setBrowserCheck] = useState<{
     passed: boolean;
     message: string;
@@ -214,14 +217,20 @@ export function PreExamChecks({
           {/* Actions */}
           <div className="flex gap-4 pt-4">
             <Button
-              onClick={onBeginExam}
+              onClick={async () => {
+                if (sessionId) {
+                  await startExamSession(sessionId);
+                  router.push(`/dashboard/exams/${enrollmentId}/take?session=${sessionId}`);
+                  router.refresh();
+                }
+              }}
               disabled={!canBegin}
               size="lg"
               className="flex-1"
             >
               Begin Exam
             </Button>
-            <Button onClick={onExit} variant="outline" size="lg">
+            <Button onClick={() => router.push('/dashboard/exams')} variant="outline" size="lg">
               Exit to Dashboard
             </Button>
           </div>

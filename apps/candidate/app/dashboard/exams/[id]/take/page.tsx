@@ -4,7 +4,6 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { PreExamChecks } from './pre-exam-checks';
 import { ExamInterface } from './exam-interface';
-import { startExamSession } from '@/app/actions/sessions';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -114,14 +113,7 @@ export default async function TakeExamPage({ params, searchParams }: PageProps) 
         }}
         questionCount={questions.length}
         attemptNumber={attemptNumber}
-        onBeginExam={async () => {
-          'use server';
-          await startExamSession(sessionId);
-          redirect(`/dashboard/exams/${enrollmentId}/take?session=${sessionId}`);
-        }}
-        onExit={() => {
-          redirect('/dashboard/exams');
-        }}
+        enrollmentId={enrollmentId}
       />
     );
   }
@@ -152,12 +144,6 @@ export default async function TakeExamPage({ params, searchParams }: PageProps) 
           questionId: a.questionId,
           answer: a.answer as any, // Parse JSON answer field
         }))}
-        onSubmit={() => {
-          redirect('/dashboard/exams');
-        }}
-        onExit={() => {
-          redirect('/dashboard/exams');
-        }}
       />
     );
   }

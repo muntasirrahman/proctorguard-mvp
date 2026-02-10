@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
 import { Button } from '@proctorguard/ui';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -40,8 +41,6 @@ type ExamInterfaceProps = {
     questionId: string;
     answer: Answer;
   }>;
-  onSubmit: () => void;
-  onExit: () => void;
 };
 
 export function ExamInterface({
@@ -49,9 +48,9 @@ export function ExamInterface({
   exam,
   questions,
   existingAnswers,
-  onSubmit,
-  onExit,
 }: ExamInterfaceProps) {
+  const router = useRouter();
+
   // Initialize state - start from last viewed question
   const [currentIndex, setCurrentIndex] = useState(session.lastViewedQuestionIndex);
   const [answers, setAnswers] = useState<Map<string, Answer>>(
@@ -136,10 +135,10 @@ export function ExamInterface({
 
         // Show score for 2 seconds before redirecting
         setTimeout(() => {
-          onSubmit();
+          router.push('/dashboard/exams');
         }, 2000);
       } else {
-        onSubmit();
+        router.push('/dashboard/exams');
       }
     } catch (error) {
       console.error('Failed to submit exam:', error);
@@ -289,7 +288,7 @@ export function ExamInterface({
                 Previous
               </Button>
               <Button
-                onClick={onExit}
+                onClick={() => router.push('/dashboard/exams')}
                 variant="outline"
                 className="w-full sm:w-auto order-last sm:order-none"
               >
