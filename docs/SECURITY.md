@@ -7,18 +7,21 @@
 When writing server-side code, always follow these security practices:
 
 ### Authentication
+
 - ✅ Check session with `auth.api.getSession()`
 - ✅ Redirect unauthenticated users to `/auth/signin`
 - ✅ Never trust client-provided user IDs
 - ✅ Always get user ID from session token
 
 ### Authorization
+
 - ✅ Validate permissions with `requirePermission()` or `hasPermission()`
 - ✅ Check permissions in ALL server actions
 - ✅ Check permissions in ALL API routes
 - ✅ Verify resource ownership before mutations
 
 ### Input Validation
+
 - ✅ Never trust client-side data
 - ✅ Validate ALL inputs in server actions
 - ✅ Sanitize user input before database operations
@@ -26,6 +29,7 @@ When writing server-side code, always follow these security practices:
 - ✅ Use Zod or similar for runtime validation
 
 ### Database Security
+
 - ✅ Use Prisma (parameterized queries)
 - ✅ NEVER use raw SQL with user input
 - ✅ Use transactions for multi-step operations
@@ -33,12 +37,14 @@ When writing server-side code, always follow these security practices:
 - ✅ Filter by organizationId to prevent cross-org access
 
 ### Audit Logging
+
 - ✅ Log sensitive operations to `AuditLog` table
 - ✅ Include userId, action, resource, resourceId
 - ✅ Log authentication attempts (success and failure)
 - ✅ Log permission violations
 
 ### Data Protection
+
 - ✅ Never expose sensitive data in URLs
 - ✅ Never log passwords or auth tokens
 - ✅ Use environment variables for secrets

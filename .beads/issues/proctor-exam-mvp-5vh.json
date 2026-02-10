@@ -1,0 +1,20 @@
+{
+  "id": "proctor-exam-mvp-5vh",
+  "title": "[EPIC] Phase 2: Manual Identity Verification (Post-Exam)",
+  "description": "**RESTRUCTURED: Manual-first approach.** Implement post-exam manual identity verification to prevent impersonation (TH-003 threat). NO AI automation in this phase.\n\n**Timeline:** 3-4 weeks (simplified from 6-8 weeks)\n**Team:** Core MVP team (Team A)\n**Priority:** HIGH (P1)\n**Cost:** $0 recurring (no third-party AI services)\n\n**What Changed:** Removed all automated AI verification (liveness detection, face matching, OCR). Focus on capture + manual staff review.\n\n**Pre-Exam Workflow (Candidate):**\n1. **Test Taker Photo Capture** - Live selfie using webcam, simple quality checks\n2. **Identity Document Capture** - Upload or capture ID document photo (passport, driver's license, national ID)\n3. **Submission Confirmation** - Preview captured images, confirm accuracy before submitting\n\n**Post-Exam Workflow (Staff):**\n4. **Manual Verification Queue** (/apps/staff/app/dashboard/verifications/) - After exam completion, PROCTOR_REVIEWER or ORG_ADMIN reviews side-by-side comparison, verifies name matches, checks ID validity\n\n**Key Features:**\n1. Pre-exam photo capture interface (candidate portal)\n2. Post-exam verification queue (staff portal)\n3. Side-by-side image comparison UI\n4. Approval/rejection workflow with notes\n\n**Database Changes:**\n- New IdentityVerification model (simplified for manual review):\n  - documentType, documentImageFrontUrl, documentImageBackUrl, testTakerPhotoUrl\n  - status: PENDING → IN_REVIEW → APPROVED/REJECTED\n  - verifiedBy (staff user), approved (boolean), rejectionReason, reviewerNotes\n\n**Critical Files:**\n- packages/database/prisma/schema.prisma - Add simplified IdentityVerification model\n- apps/candidate/app/dashboard/exams/[id]/verify/page.tsx - Photo capture flow (new)\n- apps/staff/app/dashboard/verifications/page.tsx - Manual review queue (new)\n- apps/staff/app/dashboard/verifications/[id]/page.tsx - Verification detail view (new)\n\n**Success Metrics:**\n- 100% of exam sessions have identity verification records\n- Average verification time <3 minutes per review\n- <2% rejection rate (indicates quality capture flow)\n- 95% verified within 24 hours of exam completion\n\n**Risks & Mitigation:**\n- **Risk:** Manual review bottleneck at scale\n  - **Mitigation:** Hire verification staff as volume grows, SLA monitoring\n- **Risk:** Inconsistent verification decisions\n  - **Mitigation:** Reviewer training, decision guidelines, audit sampling\n- **Risk:** Verification bypass attempts\n  - **Mitigation:** Block exam start if no verification record, server-side validation",
+  "status": "open",
+  "priority": 1,
+  "type": "epic",
+  "assignee": "Muntasir Rahman",
+  "created_at": "2026-02-10T00:00:00Z",
+  "updated_at": "2026-02-10T18:30:00Z",
+  "dependencies": [
+    "proctor-exam-mvp-6xf",
+    "proctor-exam-mvp-rsk"
+  ],
+  "blocks": [
+    "proctor-exam-mvp-ao6"
+  ],
+  "notes": "",
+  "design": ""
+}
